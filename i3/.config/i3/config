@@ -210,7 +210,7 @@ exec --no-startup-id /usr/lib/xfce-polkit/xfce-polkit
 exec_always --no-startup-id i3wsr
 
 #Start compton
-exec_always --no-startup-id compton
+exec_always --no-startup-id ~/scripts/compton.sh
 
 #Xrandr 
 exec_always --no-startup-id ~/scripts/xrandr.sh
