@@ -48,8 +48,8 @@
 
 
 and paste in this
-
-`<?xml version="1.0"?>
+```xml
+ <?xml version="1.0"?>
   <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
   <fontconfig>
       <match>
@@ -67,4 +67,5 @@ and paste in this
           <test qual="any" name="family"><string>monospace</string></test>
           <edit name="family" mode="assign" binding="same"><string>Noto Mono</string></edit>
       </match>
-  </fontconfig>`
+  </fontconfig>
+```
