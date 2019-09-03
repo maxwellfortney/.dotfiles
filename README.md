@@ -26,7 +26,7 @@
 
 6.) Done!
 
-## Option but reccommended font rendering
+## Optional but recommended font rendering
 1.) Install fonts
 `sudo pacman -S ttf-dejavu ttf-liberation noto-fonts`
 2.) Symlink the fonts
