@@ -29,12 +29,16 @@
 ## Optional but recommended font rendering
 1.) Install fonts
 `sudo pacman -S ttf-dejavu ttf-liberation noto-fonts`
+
+
 2.) Symlink the fonts
 ` sudo ln -s /etc/fonts/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d
   sudo ln -s /etc/fonts/conf.avail/10-sub-pixel-rgb.conf /etc/fonts/conf.d
   sudo ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d`
+  
 3.)Uncomment the bottom line in this file
 `sudo nano /etc/profile.d/freetype2.sh`
+
 4.)Create this file at 
 `sudo nano /etc/fonts/local.conf`
 and paste in this
