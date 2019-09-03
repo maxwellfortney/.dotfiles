@@ -1,13 +1,13 @@
-Maxwell Fortney's Arch i3 Dotfiles
+# Maxwell Fortney's Arch i3 Dotfiles Managed With GNU Stow
 
-# Prerequisites
+## Prerequisites
 
 1.) Stuff you will need 
 
 `sudo pacman -S polybar i3-gaps rofi `
 
 
-# Installing
+## Installing
 
 1.) Install [GNU Stow](https://www.gnu.org/software/stow/manual/stow.html) and [Git](https://git-scm.com/docs)  
 `sudo pacman -S stow git`
