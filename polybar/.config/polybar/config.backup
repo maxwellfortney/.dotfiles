@@ -1,14 +1,11 @@
 [colors]
-; Main bar color
-background = #222222           
-background-alt = #444       
-foreground = #dfdfdf        
-foreground-alt = #555       
-
-; Current workspace color; Also need to change this color in ~/scripts/bar.sh
-primary = #01ab84           
-secondary = #e60053         
-alert = #ff3333             
+background = #222
+background-alt = #444
+foreground = #dfdfdf
+foreground-alt = #555
+primary = #01AB84
+secondary = #e60053
+alert = #01AB84
 
 [bar/main]
 bottom = true
@@ -23,7 +20,7 @@ foreground = ${colors.foreground}
 line-size = 0
 line-color = #f00
 border-size = 0
-border-color = ${colors.primary}
+border-color = #01AB84
 padding-left = 0
 padding-right = 1
 module-margin-left = 0
@@ -36,18 +33,9 @@ font-4 = Hack Nerd Font Mono:style=Bold:size=7;2
 modules-left = i3
 modules-center = 
 modules-right = separator pulseaudio separator network separator temperature bar
-
+tray-padding = 2
 cursor-click = pointer
 cursor-scroll = ns-resize
-
-tray-position = right
-tray-detached = false
-tray-maxsize = 20
-tray-background = ${colors.background}
-tray-offset-x = 0
-tray-offset-y = 0
-tray-padding = 0
-tray-scale = 1.0
 
 [module/bar]
 type = custom/script
@@ -73,7 +61,7 @@ label-mode-foreground = #000
 label-mode-background = ${colors.background}
 
 label-focused = %name%
-label-focused-background = ${colors.primary}
+label-focused-background = #01AB84
 label-focused-foreground = ${colors.background}
 label-focused-padding = 1
 label-unfocused = %name%
@@ -93,7 +81,7 @@ type = internal/pulseaudio
 
 format-volume = <label-volume> <bar-volume>
 label-volume =  
-label-volume-foreground = ${colors.primary}
+label-volume-foreground = #01AB84
 
 format-muted-prefix = "ﳌ "
 format-muted-foreground = ${colors.foreground-alt}
@@ -132,7 +120,7 @@ label-warn-foreground =#fc0303
 ramp-0 =  
 ramp-1 =  
 ramp-2 =  
-ramp-foreground = ${colors.primary}
+ramp-foreground = #01AB84
 
 [module/network]
 type = internal/network
@@ -142,10 +130,10 @@ interval = 3.0
 unknown-as-up = true
 
 format-connected =  <label-connected>
-format-connected-foreground = ${colors.primary}
+format-connected-foreground = #01AB84
 
 format-disconnected =  <label-disconnected>
-format-disconnected-foreground = ${colors.primary}
+format-disconnected-foreground = #01AB84
 
 ; All labels support the following tokens:
 ;   %ifname%    [wireless+wired]

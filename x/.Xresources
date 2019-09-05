@@ -1,5 +1,23 @@
-URxvt*background: #424242
-URxvt*foreground: #FFFFFF
+*background:  #222222
+*foreground:  #d3dae3
+*color0:  #005051
+*color1:  #5e9563
+*color2:  #08a162
+*color3:  #3ca074
+*color4:  #007676
+*color5:  #047173
+*color6:  #008b78
+*color7:  #4dcba5
+*color8:  #005051
+*color9:  #5e9563
+*color10:  #08a162
+*color11:  #3ca074
+*color12:  #007676
+*color13:  #047173
+*color14:  #008b78
+*color15:  #4dcba5
+
+
 URxvt*skipScroll:  true
 URxvt*scrollBar:  false
 URxvt*scrollTtyOutput:  false
