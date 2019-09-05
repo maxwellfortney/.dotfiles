@@ -13,11 +13,11 @@ set $mod Mod1
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-font Crisp:monospace 8
+#font Noto Sans:monospace 8
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
-#font Crisp 8
+font Noto Sans 8
 
 # The combination of xss-lock, nm-applet and pactl is a popular choice, so
 # they are included here as an example. Modify as you see fit.
@@ -176,7 +176,7 @@ bindsym $mod+r mode "resize"
 bindsym --release Print exec scrot '%Y-%m-%d-%H-%M-%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
 
 #update ui
-exec_always --no-startup-id feh --bg-scale ~/Pictures/Background.png
+exec_always --no-startup-id feh --bg-scale ~/Pictures/Backgrounds/Background.png
 
 new_window pixel 5
 
@@ -186,14 +186,23 @@ gaps outer 0
 smart_gaps on
 smart_borders on
 
-# colours
+# colours                border  bground text   indicator child_border
+client.focused          #01AB84 #01AB84 #222222 #FF1D1D   #01AB84
+client.focused_inactive #222222 #222222 #FFFFFF #484E50   #5F676A
+client.unfocused        #222222 #222222 #888888 #292D2E   #222222
+client.urgent           #FF1D1D #FF1D1D #FFFFFF #222222   #FF1D1D
+client.placeholder      #000000 #0C0C0C #FFFFFF #000000   #0C0C0C
 
-client.focused #01AB84 #01AB84 #000000 #01AB84 #01AB84
-client.focused_inactive #333333 #5F676A #FFFFFF #484E50 #5F676A
-client.unfocused #333333 #222222 #888888 #292D2E #222222
-client.urgent #FF28D4 #FF28D4 #FFFFFF #FF28D4 #FF28D4
-client.placeholder #000000 #0C0C0C #FFFFFF #000000 #0C0C0C
-client.background #551177
+client.background       #01AB84
+
+
+#client.focused #01AB84 #01AB84 #000000 #01AB84 #01AB84
+#client.focused_inactive #333333 #5F676A #FFFFFF #484E50 #5F676A
+#client.unfocused #333333 #222222 #888888 #292D2E #222222
+#client.urgent #FF28D4 #FF28D4 #FFFFFF #FF28D4 #FF28D4
+#client.placeholder #000000 #0C0C0C #FFFFFF #000000 #0C0C0C
+
+#client.background #551177
 
 # polybar
 
@@ -201,7 +210,7 @@ exec_always --no-startup-id ~/.config/polybar/launch.sh
 
 #Auto open on workspaces
 
-exec_always --no-startup-id ~/scripts/workspaces-init.sh
+#exec_always --no-startup-id ~/scripts/workspaces-init.sh
 
 #Polkit
 exec --no-startup-id /usr/lib/xfce-polkit/xfce-polkit
@@ -213,4 +222,7 @@ exec_always --no-startup-id ~/scripts/i3wsr.sh
 exec_always --no-startup-id ~/scripts/compton.sh
 
 #Xrandr 
-exec_always --no-startup-id ~/scripts/xrandr.sh
+#exec_always --no-startup-id ~/scripts/xrandr.sh
+
+#Turn Off Screen Sleep
+exec_always xset -dpms
