@@ -71,3 +71,8 @@ and paste in this
       </match>
   </fontconfig>
 ```
+
+
+# To do List
+1.) Fix dependencies
+
