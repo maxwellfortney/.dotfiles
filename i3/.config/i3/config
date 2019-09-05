@@ -210,7 +210,7 @@ exec_always --no-startup-id ~/.config/polybar/launch.sh
 
 #Auto open on workspaces
 
-#exec_always --no-startup-id ~/scripts/workspaces-init.sh
+exec_always --no-startup-id ~/scripts/workspaces-init.sh
 
 #Polkit
 exec --no-startup-id /usr/lib/xfce-polkit/xfce-polkit
@@ -222,7 +222,7 @@ exec_always --no-startup-id ~/scripts/i3wsr.sh
 exec_always --no-startup-id ~/scripts/compton.sh
 
 #Xrandr 
-#exec_always --no-startup-id ~/scripts/xrandr.sh
+exec_always --no-startup-id ~/scripts/xrandr.sh
 
 #Turn Off Screen Sleep
 exec_always xset -dpms
