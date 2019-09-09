@@ -31,9 +31,21 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 exec --no-startup-id nm-applet
 
 # Use pactl to adjust volume in PulseAudio.
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+#bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
+#bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
+#bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym $mod+F11 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
+bindsym $mod+F10 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
+bindsym $mod+F9 exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+
+# Media player controls
+#bindsym XF86AudioPlay exec playerctl play-pause
+#bindsym XF86AudioNext exec playerctl next
+#bindsym XF86AudioPrev exec playerctl previous
+bindsym $mod+F6 exec playerctl previous
+bindsym $mod+F7 exec playerctl play-pause
+bindsym $mod+F8 exec playerctl next
+
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -141,8 +153,10 @@ bindsym $mod+Shift+0 move container to workspace number 0
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
+
 # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r restart
+
 # exit i3 (logs you out of your X session)
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
 
@@ -204,13 +218,11 @@ client.background       #01AB84
 
 #client.background #551177
 
-# polybar
-
+#Polybar
 exec_always --no-startup-id ~/.config/polybar/launch.sh
 
 #Auto open on workspaces
-
-exec_always --no-startup-id ~/scripts/workspaces-init.sh
+exec --no-startup-id ~/scripts/workspaces-init.sh
 
 #Polkit
 exec --no-startup-id /usr/lib/xfce-polkit/xfce-polkit
@@ -226,3 +238,10 @@ exec_always --no-startup-id ~/scripts/xrandr.sh
 
 #Turn Off Screen Sleep
 exec_always xset -dpms
+
+#Keybindings for redshift(yay)
+bindsym $mod+x exec --no-startup-id redshift -x
+bindsym $mod+shift+x exec --no-startup-id redshift -O 5000K
+
+#Keybindings for init workspaces
+bindsym $mod+c exec --no-startup-id ~/scripts/workspaces-init.sh

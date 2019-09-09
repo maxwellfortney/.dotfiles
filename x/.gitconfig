@@ -3,3 +3,5 @@
 	email = MaxwellFortney@gmail.com
 [color]
 	ui = true
+[credential]
+	helper = /usr/bin/pass-git-helper

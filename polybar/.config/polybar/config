@@ -12,7 +12,7 @@ alert = #ff3333
 
 [bar/main]
 bottom = true
-monitor = DP-1
+monitor = DisplayPort-0
 width = 100%
 height = 30
 radius = 0.0
