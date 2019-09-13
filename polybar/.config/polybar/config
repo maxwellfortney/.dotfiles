@@ -12,12 +12,12 @@ alert = #ff3333
 
 [bar/main]
 bottom = true
-monitor = DisplayPort-0
+monitor = eDP-1
 width = 100%
-height = 30
+height = 40
 radius = 0.0
 fixed-center = true
-dpi = 210
+dpi = 260
 background = ${colors.background}
 foreground = ${colors.foreground}
 line-size = 0
@@ -25,29 +25,28 @@ line-color = #f00
 border-size = 0
 border-color = ${colors.primary}
 padding-left = 0
-padding-right = 1
+padding-right = 0
 module-margin-left = 0
 module-margin-right = 0
-font-0 = Noto Sans:size=5;2
+font-0 = Noto Sans:size=7
 font-1 = Hack Nerd Font:style=Italic:size=7;2
 font-2 = Hack Nerd Font Mono:style=Regular:size=7;2
-font-3 = Hack Nerd Font:style=Bold Italic:size=7;2
-font-4 = Hack Nerd Font Mono:style=Bold:size=7;2
 modules-left = i3
 modules-center = 
-modules-right = separator pulseaudio separator network separator temperature bar
+modules-right = separator pulseaudio separator wireless-network separator battery separator temperature bar
 
 cursor-click = pointer
 cursor-scroll = ns-resize
 
 tray-position = right
 tray-detached = false
-tray-maxsize = 20
 tray-background = ${colors.background}
 tray-offset-x = 0
-tray-offset-y = 0
-tray-padding = 0
-tray-scale = 1.0
+tray-offset-y = -0
+tray-padding = 2
+tray-scale = 1
+tray-maxsize = 50
+
 
 [module/bar]
 type = custom/script
@@ -118,7 +117,7 @@ thermal-zone = 0
 base-temperature = 55
 warn-temperature = 85
 
-hwmon-path = /sys/devices/platform/coretemp.0/hwmon/hwmon2/temp1_input
+hwmon-path = /sys/devices/platform/coretemp.0/hwmon/hwmon1/temp1_input
 
 format = <ramp> <label>
 format-underline = #00000000
@@ -134,34 +133,26 @@ ramp-1 = 
 ramp-2 =  
 ramp-foreground = ${colors.primary}
 
-[module/network]
+[module/wireless-network]
 type = internal/network
-interface = eno2
+interface = wlp60s0
 interval = 3.0
 
-unknown-as-up = true
+format-connected = <ramp-signal> <label-connected>
+format-disconnected = <label-disconnected>
 
-format-connected =  <label-connected>
-format-connected-foreground = ${colors.primary}
-
-format-disconnected =  <label-disconnected>
-format-disconnected-foreground = ${colors.primary}
-
-; All labels support the following tokens:
-;   %ifname%    [wireless+wired]
-;   %local_ip%  [wireless+wired]
-;   %local_ip6% [wireless+wired]
-;   %essid%     [wireless]
-;   %signal%    [wireless]
-;   %upspeed%   [wireless+wired]
-;   %downspeed% [wireless+wired]
-;   %linkspeed% [wired]
-
-label-connected = %local_ip%, %downspeed%
+label-connected = %essid% %downspeed:9%
 label-connected-foreground = #FFFFFF
 
 label-disconnected = Not Connected
 label-disconnected-foreground = #FFFFFF
+
+ramp-signal-0 = 
+ramp-signal-1 = 
+ramp-signal-2 = 
+ramp-signal-3 = 
+ramp-signal-4 = 
+ramp-signal-foreground = ${colors.primary}
 
 [settings]
 screenchange-reload = true
@@ -169,3 +160,33 @@ screenchange-reload = true
 [global/wm]
 margin-top = 5
 margin-bottom = 5
+
+[module/battery]
+type = internal/battery
+battery = BAT0
+adapter = AC0
+poll-interval = 5
+full-at = 98
+
+format-charging = <animation-charging> <label-charging>
+format-discharging = <ramp-capacity> <label-discharging>
+
+label-charging = %percentage%%
+label-discharging = %percentage%%
+
+ramp-capacity-0 = 
+ramp-capacity-0-foreground = ${colors.alert}
+ramp-capacity-1 = 
+ramp-capacity-1-foreground = #ff5600
+ramp-capacity-2 = 
+ramp-capacity-3 = 
+ramp-capacity-4 = 
+ramp-capacity-foreground = #FFFFFF
+
+animation-charging-0 = 
+animation-charging-1 = 
+animation-charging-2 = 
+animation-charging-3 = 
+animation-charging-4 = 
+animation-charging-foreground = #34e000
+animation-charging-framerate = 750

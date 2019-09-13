@@ -24,28 +24,20 @@ font Noto Sans 8
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend.
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+exec --no-startup-id xss-lock --transfer-sleep-lock -- betterlockscreen -l dim --nofork
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
 
 # Use pactl to adjust volume in PulseAudio.
-#bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
-#bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
-#bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym $mod+F11 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
-bindsym $mod+F10 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
-bindsym $mod+F9 exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
 
-# Media player controls
-#bindsym XF86AudioPlay exec playerctl play-pause
-#bindsym XF86AudioNext exec playerctl next
-#bindsym XF86AudioPrev exec playerctl previous
-bindsym $mod+F6 exec playerctl previous
-bindsym $mod+F7 exec playerctl play-pause
-bindsym $mod+F8 exec playerctl next
-
+# Sreen brightness controls
+bindsym XF86MonBrightnessUp exec --no-startup-id light -A 5
+bindsym XF86MonBrightnessDown exec --no-startup-id light -U 5
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
@@ -190,7 +182,7 @@ bindsym $mod+r mode "resize"
 bindsym --release Print exec scrot '%Y-%m-%d-%H-%M-%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
 
 #update ui
-exec_always --no-startup-id feh --bg-scale ~/Pictures/Backgrounds/Background.png
+exec_always --no-startup-id feh --bg-scale ~/Backgrounds/Background.png
 
 new_window pixel 5
 
@@ -200,7 +192,7 @@ gaps outer 0
 smart_gaps on
 smart_borders on
 
-# colours                border  bground text   indicator child_border
+# Colors                border  bground text   indicator child_border
 client.focused          #01AB84 #01AB84 #222222 #FF1D1D   #01AB84
 client.focused_inactive #222222 #222222 #FFFFFF #484E50   #5F676A
 client.unfocused        #222222 #222222 #888888 #292D2E   #222222
@@ -208,15 +200,6 @@ client.urgent           #FF1D1D #FF1D1D #FFFFFF #222222   #FF1D1D
 client.placeholder      #000000 #0C0C0C #FFFFFF #000000   #0C0C0C
 
 client.background       #01AB84
-
-
-#client.focused #01AB84 #01AB84 #000000 #01AB84 #01AB84
-#client.focused_inactive #333333 #5F676A #FFFFFF #484E50 #5F676A
-#client.unfocused #333333 #222222 #888888 #292D2E #222222
-#client.urgent #FF28D4 #FF28D4 #FFFFFF #FF28D4 #FF28D4
-#client.placeholder #000000 #0C0C0C #FFFFFF #000000 #0C0C0C
-
-#client.background #551177
 
 #Polybar
 exec_always --no-startup-id ~/.config/polybar/launch.sh
@@ -230,18 +213,15 @@ exec --no-startup-id /usr/lib/xfce-polkit/xfce-polkit
 #Auto name workspaces
 exec_always --no-startup-id ~/scripts/i3wsr.sh
 
-#Start compton
-exec_always --no-startup-id ~/scripts/compton.sh
-
-#Xrandr 
-exec_always --no-startup-id ~/scripts/xrandr.sh
-
-#Turn Off Screen Sleep
-exec_always xset -dpms
-
 #Keybindings for redshift(yay)
 bindsym $mod+x exec --no-startup-id redshift -x
 bindsym $mod+shift+x exec --no-startup-id redshift -O 5000K
 
 #Keybindings for init workspaces
 bindsym $mod+c exec --no-startup-id ~/scripts/workspaces-init.sh
+
+#Rofi pass keybindings
+bindsym $mod+p exec --no-startup-id rofi-pass
+
+#Keybindings for lock screen
+bindsym $mod+shift+z exec betterlockscreen -l dim
