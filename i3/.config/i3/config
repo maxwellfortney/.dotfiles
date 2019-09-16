@@ -190,7 +190,7 @@ bindsym $mod+r mode "resize"
 bindsym --release Print exec scrot '%Y-%m-%d-%H-%M-%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
 
 #update ui
-exec_always --no-startup-id feh --bg-scale ~/Pictures/Backgrounds/Background.png
+exec_always --no-startup-id feh --bg-scale ~/Backgrounds/Background.png
 
 new_window pixel 5
 
