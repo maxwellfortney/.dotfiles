@@ -28,14 +28,14 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
-exec --no-startup-id nm-applet
+#exec nm-applet
 
 # Use pactl to adjust volume in PulseAudio.
 #bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
 #bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
 #bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
-bindsym $mod+F11 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10%
-bindsym $mod+F10 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10%
+bindsym $mod+F11 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +7%
+bindsym $mod+F10 exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -7%
 bindsym $mod+F9 exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
 
 # Media player controls
@@ -245,3 +245,6 @@ bindsym $mod+shift+x exec --no-startup-id redshift -O 5000K
 
 #Keybindings for init workspaces
 bindsym $mod+c exec --no-startup-id ~/scripts/workspaces-init.sh
+
+#Rofi pass keybind
+bindsym $mod+p exec --no-startup-id rofi-pass

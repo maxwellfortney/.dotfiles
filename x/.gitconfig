@@ -4,4 +4,4 @@
 [color]
 	ui = true
 [credential]
-	helper = /usr/bin/pass-git-helper
+	helper = cache --timeout=31536000
