@@ -40,7 +40,6 @@
 
 `sudo ln -s /etc/fonts/conf.avail/11-lcdfilter-default.conf /etc/fonts/conf.d`
   
-```
 
 
 # To do List
