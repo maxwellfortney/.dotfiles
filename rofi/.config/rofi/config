@@ -1,4 +1,4 @@
 rofi.modi:          drun
 rofi.theme:         sidebar
-rofi.font:          Noto Sans 11
+rofi.font:          SailecMedium 12.5
 rofi.theme:         ~/.config/rofi/maxwell-theme.rasi
