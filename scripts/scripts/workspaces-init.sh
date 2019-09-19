@@ -6,4 +6,4 @@ i3-msg 'workspace 2; exec urxvt -e sh -c "echo '1208' | sudo -S code"'
 sleep 2
 i3-msg 'workspace 4; exec --no-startup-id spotify'
 sleep 3
-i3-msg 'workspace 1; exec --no-startup-id chromium'
+i3-msg 'workspace 1; exec --no-startup-id brave'

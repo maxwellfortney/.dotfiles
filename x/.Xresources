@@ -29,8 +29,8 @@ URxvt*perl-ext:
 URxvt*perl-ext-common:
 
 !Fonts
-URxvt*font:     xft:mono:medium:size=12
-xterm*faceName: xft:mono:medium:size=12
+URxvt*font:     xft:bitstream vera:medium:size=14
+!xterm*faceName: xft:mono:medium:size=12
 !URxvt.letterSpace: -3
 
 !!!!!!!!!!!!!!!!!! ROFI !!!!!!!!!!!!!!!!!!

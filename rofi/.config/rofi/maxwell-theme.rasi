@@ -30,7 +30,7 @@
 #window {
     background-color: @background;
     border: 0;
-    padding: 2.5ch;
+    padding: 1.8ch;
 }
 
 #mainbox {
@@ -41,7 +41,7 @@
 #message {
     border: 2px 0px 0px;
     border-color: @border-color;
-    padding: 1px;
+    padding: 3px;
 }
 
 #textbox {
@@ -65,12 +65,12 @@
     border-color: @background;
     spacing: 2px;
     scrollbar: false;
-    padding: 10px 0px 50px;
+    padding: 20px 0px 75px;
 }
 
 #element {
     border: 0;
-    padding: 1px;
+    padding: 3px;
 }
 
 #element.normal.normal {
@@ -119,14 +119,14 @@
 }
 
 #scrollbar {
-    width: 4px;
+    width: 0px;
     border: 0;
-    handle-width: 8px;
+    handle-width: 0px;
     padding: 0;
 }
 
 #sidebar {
-    border: 2px 0px 0px;
+    border: 0px 0px 0px;
     border-color: @border-color;
 }
 
