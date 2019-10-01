@@ -7,7 +7,6 @@
 
 alias ls='ls --color=auto'
 PS1='[\u@\h \W]\$ '
-
 exec fish
 
-exec alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+#exec alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'

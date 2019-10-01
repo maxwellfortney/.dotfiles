@@ -136,7 +136,7 @@ bar-volume-empty = –
 
 [module/temperature]
 type = internal/temperature
-thermal-zone = 0
+thermal-zone = 2
 base-temperature = 55
 warn-temperature = 85
 

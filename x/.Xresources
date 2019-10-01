@@ -22,7 +22,7 @@ URxvt*skipScroll:  true
 URxvt*scrollBar:  false
 URxvt*scrollTtyOutput:  false
 URxvt*termName:  screen-256color
-URxvt.internalBorder: 10
+URxvt.internalBorder: 2
 URxvt*perl-ext:
 URxvt*perl-ext-common:
 
@@ -30,7 +30,6 @@ URxvt*perl-ext-common:
 URxvt.font:     xft:Bitstream Vera Sans Mono:size=12:antialias=true
 URxvt.boldFont: xft:Bitstream Vera Sans Mono:bold:size=12:antialias=true
 !URxvt.letterSpace: -6
-
 
 
 !!!!!!!!!!!!!!!!!! ROFI !!!!!!!!!!!!!!!!!!

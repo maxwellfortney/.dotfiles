@@ -201,7 +201,8 @@ smart_gaps on
 smart_borders on
 
 # colours                border  bground text   indicator child_border
-client.focused          #01AB84 #01AB84 #222222 #FF1D1D   #01AB84
+#client.focused          #01AB84 #01AB84 #222222 #FF1D1D   #01AB84
+client.focused			#01ab84 #000000 #222222 #FF1D1D   #01ab84
 client.focused_inactive #222222 #222222 #FFFFFF #484E50   #5F676A
 client.unfocused        #222222 #222222 #888888 #292D2E   #222222
 client.urgent           #FF1D1D #FF1D1D #FFFFFF #222222   #FF1D1D
