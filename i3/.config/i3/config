@@ -187,7 +187,8 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
-bindsym --release Print exec scrot '%Y-%m-%d-%H-%M-%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+bindsym --release Home scrot '%Y-%m-%d-%H-%M-%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+bindsym $mod+Home exec --no-startup-id deepin-screenshot
 
 #update ui
 exec_always --no-startup-id feh --bg-scale ~/Backgrounds/Background.png
@@ -220,7 +221,7 @@ client.background       #01AB84
 #client.background #551177
 
 #Polybar
-exec_always --no-startup-id ~/.config/polybar/launch.sh
+exec --no-startup-id ~/.config/polybar/launch.sh
 
 #Auto open on workspaces
 exec --no-startup-id ~/scripts/workspaces-init.sh
@@ -249,3 +250,5 @@ bindsym $mod+c exec --no-startup-id ~/scripts/workspaces-init.sh
 
 #Rofi pass keybind
 bindsym $mod+p exec --no-startup-id rofi-pass
+
+#Screenshot

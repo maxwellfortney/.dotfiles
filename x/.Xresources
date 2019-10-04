@@ -27,10 +27,17 @@ URxvt*perl-ext:
 URxvt*perl-ext-common:
 
 !Fonts
-URxvt.font:     xft:Bitstream Vera Sans Mono:size=12:antialias=true
-URxvt.boldFont: xft:Bitstream Vera Sans Mono:bold:size=12:antialias=true
-!URxvt.letterSpace: -6
+#define font1         Inconsolata
+#define font2         Inconsolata Nerd Font
+#define font3         DejaVu Sans Mono Nerd Font
+#define font4         Noto Sans Mono CJK JP
 
+URxvt*letterSpace: 0
+URxvt*font:           xft:font1:pixelsize=19, xft:font2:pixelsize=17:minspace=false, xft:font3:pixelsize=17,xft:font4:pixelsize=17
+URxvt*boldFont:       xft:font1:bold:pixelsize=19, xft:font2:pixelsize=17:minspace=False,xft:font3:pixelsize=17,xft:font4:pixelsize=17
+URxvt*italicFont:     xft:font1:italic:pixelsize=19, xft:font2:pixelsize=17:minspace=False,xft:font3:pixelsize=17,xft:font4:pixelsize=17
+URxvt*boldItalicFont: xft:font1:bold:italic:pixelsize=19, xft:font2:pixelsize=17:minspace=False, xft:font3:pixelsize=17, xft:font4:pixelsize=17
+xterm*font:     xft:Bitstream Vera Sans Mono:pixelsize:size=12:antialias=true
 
 !!!!!!!!!!!!!!!!!! ROFI !!!!!!!!!!!!!!!!!!
 
