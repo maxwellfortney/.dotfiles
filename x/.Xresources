@@ -24,12 +24,28 @@ URxvt*skipScroll:  true
 URxvt*scrollBar:  false
 URxvt*scrollTtyOutput:  false
 URxvt*termName:  screen-256color
-URxvt.internalBorder: 10
+URxvt.internalBorder: 2 
 URxvt*perl-ext:
 URxvt*perl-ext-common:
 
 !Fonts
-URxvt*font:     xft:bitstream vera:medium:size=14
+#define font1         Inconsolata
+#define font2         Inconsolata Nerd Font
+#define font3         DejaVu Sans Mono Nerd Font
+#define font4         Noto Sans Mono CJK JP
+
+URxvt*letterSpace: 0
+URxvt*font:           xft:font1:pixelsize=28, xft:font2:pixelsize=17:minspace=false, xft:font3:pixelsize=17,xft:font4:pixelsize=17
+URxvt*boldFont:       xft:font1:bold:pixelsize=28, xft:font2:pixelsize=17:minspace=False,xft:font3:pixelsize=17,xft:font4:pixelsize=17
+URxvt*italicFont:     xft:font1:italic:pixelsize=28, xft:font2:pixelsize=17:minspace=False,xft:font3:pixelsize=17,xft:font4:pixelsize=17
+URxvt*boldItalicFont: xft:font1:bold:italic:pixelsize=28, xft:font2:pixelsize=17:minspace=False, xft:font3:pixelsize=17, xft:font4:pixelsize=17
+xterm*font:     xft:Bitstream Vera Sans Mono:pixelsize:size=12:antialias=true
+
+
+
+
+!Fonts
+!URxvt*font:     xft:bitstream vera:medium:size=14
 !xterm*faceName: xft:mono:medium:size=12
 !URxvt.letterSpace: -3
 

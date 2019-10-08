@@ -180,6 +180,8 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 
 bindsym --release Print exec scrot '%Y-%m-%d-%H-%M-%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+bindsym F11 exec deepin-screenshot
+
 
 #update ui
 exec_always --no-startup-id feh --bg-scale ~/Backgrounds/Background.png
