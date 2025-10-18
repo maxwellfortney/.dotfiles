@@ -7,5 +7,6 @@ Exec=cursor ~/code/paella/crossmint-sdk/crossmint-sdk.code-workspace
 Icon=~/.local/share/applications/crossmint-mark-green.png
 Terminal=false
 Categories=Development;IDE;
+MimeType=application/x-code-workspace;
 StartupWMClass=cursor
 
