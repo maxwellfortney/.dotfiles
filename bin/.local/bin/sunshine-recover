@@ -1,0 +1,13 @@
+#!/bin/bash
+# Emergency recovery script to restore physical monitor
+
+echo "Emergency recovery: Restoring physical monitor..."
+
+# Try to restore the physical monitor
+hyprctl keyword monitor "HDMI-A-2,3840x2160@240,0x0,1"
+
+# Clean up any headless outputs
+hyprctl output destroy HEADLESS-1 2>/dev/null || true
+
+echo "Physical monitor should be restored. If not, try:"
+echo "hyprctl keyword monitor 'HDMI-A-2,3840x2160@240,0x0,1'"

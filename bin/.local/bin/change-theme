@@ -1,0 +1,217 @@
+#!/bin/bash
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+HYPRPAPER_CONFIG="$HOME/.config/hypr/hyprpaper.conf"
+
+# Function to display usage information
+show_usage() {
+    echo "Usage: change-theme <wallpaper_path>"
+    echo "Example: change-theme ~/Pictures/wallpaper.jpg"
+    echo "         change-theme ./my-wallpaper.png"
+}
+
+# Function to print colored messages
+print_message() {
+    local color="$1"
+    local message="$2"
+    echo -e "${color}${message}${NC}"
+}
+
+# Function to print status messages
+print_status() {
+    local status="$1"
+    local message="$2"
+    case "$status" in
+        "info")    print_message "$BLUE" "ℹ️  $message" ;;
+        "success") print_message "$GREEN" "✓ $message" ;;
+        "warning") print_message "$YELLOW" "⚠️  $message" ;;
+        "error")   print_message "$RED" "✗ $message" ;;
+        "progress") print_message "$YELLOW" "$message" ;;
+    esac
+}
+
+# Function to resolve and validate wallpaper path
+resolve_wallpaper_path() {
+    local wallpaper_path="$1"
+    local absolute_path
+    
+    # Get absolute path
+    absolute_path=$(realpath "$wallpaper_path" 2>/dev/null)
+    if [ $? -ne 0 ]; then
+        print_status "error" "Invalid path '$wallpaper_path'"
+        return 1
+    fi
+    
+    # Validate file exists and is readable
+    if [ ! -f "$absolute_path" ]; then
+        print_status "error" "File '$absolute_path' does not exist"
+        return 1
+    fi
+    
+    if [ ! -r "$absolute_path" ]; then
+        print_status "error" "File '$absolute_path' is not readable"
+        return 1
+    fi
+    
+    # Return the absolute path via echo (caller should capture with $())
+    echo "$absolute_path"
+    return 0
+}
+
+# Function to execute command with error handling
+execute_command() {
+    local command="$1"
+    local success_msg="$2"
+    local error_msg="$3"
+    local silent="${4:-false}"
+    
+    if [ "$silent" = "true" ]; then
+        if eval "$command" &>/dev/null; then
+            print_status "success" "$success_msg"
+            return 0
+        else
+            print_status "error" "$error_msg"
+            return 1
+        fi
+    else
+        if eval "$command"; then
+            print_status "success" "$success_msg"
+            return 0
+        else
+            print_status "error" "$error_msg"
+            return 1
+        fi
+    fi
+}
+
+# Function to update hyprpaper config
+update_config() {
+    local image_path="$1"
+    
+    print_status "progress" "Updating config file..."
+    
+    # Create config directory if it doesn't exist
+    mkdir -p "$(dirname "$HYPRPAPER_CONFIG")"
+    
+    # Update the config file
+    cat > "$HYPRPAPER_CONFIG" << EOF
+preload = $image_path
+wallpaper = , $image_path
+EOF
+    
+    if [ $? -eq 0 ]; then
+        print_status "success" "Config file updated successfully"
+        return 0
+    else
+        print_status "error" "Failed to update config file"
+        return 1
+    fi
+}
+
+# Function to reload wallpaper
+reload_wallpaper() {
+    local image_path="$1"
+    
+    print_status "progress" "Changing wallpaper..."
+    execute_command "hyprctl hyprpaper reload \",$image_path\"" "Wallpaper changed successfully" "Failed to change wallpaper" "true"
+}
+
+# Function to change wallpaper
+change_wallpaper() {
+    local wallpaper_path="$1"
+    local absolute_path
+    
+    # Resolve and validate the path
+    absolute_path=$(resolve_wallpaper_path "$wallpaper_path")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    print_message "$GREEN" "Changing wallpaper to: $absolute_path"
+    
+    # Update config file and change wallpaper
+    if update_config "$absolute_path" && reload_wallpaper "$absolute_path"; then
+        print_status "success" "🎉 Wallpaper changed successfully and config updated!"
+        return 0
+    else
+        print_status "error" "❌ Failed to change wallpaper"
+        return 1
+    fi
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
+# Function to generate color scheme with matugen
+generate_colors() {
+    local wallpaper_path="$1"
+    local absolute_path
+    
+    # Resolve and validate the path
+    absolute_path=$(resolve_wallpaper_path "$wallpaper_path")
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+    
+    print_status "progress" "Generating color schemes..."
+    
+    # Check if matugen is available
+    if ! command_exists "matugen"; then
+        print_status "warning" "matugen not found, skipping color generation"
+        return 0
+    fi
+    
+    # Generate colors from the wallpaper
+    execute_command "matugen image \"$absolute_path\"" "Color scheme generated successfully" "Failed to generate color scheme" "true"
+}
+
+# Function to validate dependencies
+validate_dependencies() {
+    local missing_deps=()
+    
+    if ! command_exists "hyprctl"; then
+        missing_deps+=("hyprctl")
+    fi
+    
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        print_status "error" "Missing dependencies: ${missing_deps[*]}"
+        print_status "info" "Make sure Hyprland is running and hyprctl is available"
+        return 1
+    fi
+    
+    return 0
+}
+
+# Main execution
+main() {
+    # Check if argument is provided
+    if [ -z "$1" ]; then
+        show_usage
+        exit 1
+    fi
+    
+    # Validate dependencies
+    if ! validate_dependencies; then
+        exit 1
+    fi
+    
+    # Change the wallpaper and generate colors
+    if change_wallpaper "$1"; then
+        generate_colors "$1"
+        exit 0
+    else
+        exit 1
+    fi
+}
+
+# Run main function
+main "$@"
