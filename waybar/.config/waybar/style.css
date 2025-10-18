@@ -1,0 +1,65 @@
+* {
+    font-family: "monospace";
+}
+
+@define-color background-color rgba(17, 17, 27, 0.4);
+
+window#waybar{
+    padding: 0 100px;
+    all: unset;
+}
+
+
+/* Common modules styles */
+.modules-left {
+    background: @background-color;
+    margin: 0 0 12px 12px;
+    border-radius: 16px;
+}
+.modules-center {
+    background: @background-color;
+    margin: 0 0 12px 0;
+    border-radius: 16px;
+    padding: 0 14px;
+}
+.modules-right {
+    background: @background-color;
+    margin: 0 12px 12px 0;
+    border-radius: 16px;
+    padding: 0 14px;
+}
+
+
+/* Workspaces */
+/* first button only left padding */
+#workspaces button:first-child {
+    padding-left: 12px;
+}
+
+#workspaces button {
+    padding: 0 12px 0 0;
+    transition: color .2s ease-in-out;
+}
+#workspaces button.active {
+    color: #a0cafd; /* matugen: kitty selection foreground */
+    border: none;
+    transition: color .2s ease-in-out;
+}
+
+
+#pulseaudio {
+    padding: 0 12px 0 0;
+}
+
+#network {
+    padding: 0 20px 0 0;
+}
+
+#custom-separator {
+    padding: 0 12px 0 0;
+}
+
+/* Hyprsunset module */
+#custom-hyprsunset {
+    padding: 0 12px 0 0;
+}
