@@ -1,0 +1,21 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=MongoDB Compass
+Comment=The MongoDB GUI - Custom Configuration
+GenericName=MongoDB Compass
+Exec=mongodb-compass --ignore-additional-command-line-flags --ozone-platform-hint=x11 --password-store=kwallet6 -- %U
+Icon=mongodb-compass
+StartupNotify=true
+NoDisplay=false
+Categories=Office;Database;Development;Building;Debugger;IDE;GUIDesigner;Profiling;
+MimeType=x-scheme-handler/mongodb;x-scheme-handler/mongodb+srv;
+Keywords=MongoDB;Database;NoSQL;GUI;Compass;
+StartupWMClass=MongoDB Compass
+Terminal=false
+Actions=NewWindow;
+
+[Desktop Action NewWindow]
+Name=Open New Window
+Exec=mongodb-compass --ignore-additional-command-line-flags --ozone-platform-hint=x11 --password-store=kwallet6 --new-window
+Icon=mongodb-compass
