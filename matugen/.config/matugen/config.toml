@@ -40,20 +40,10 @@ output_path = '~/.config/Kvantum/matugen/matugen.kvconfig'
 input_path = '~/.config/matugen/templates/spotify.ini'
 output_path = '~/.config/spicetify/Themes/Comfy/color.ini'
 
-# Zed editor
-[templates.zed]
-input_path  = '~/.config/matugen/templates/zed-theme.json'
-output_path = '~/.config/zed/themes/matugen.json'
-
 # Slack
 [templates.slack]
 input_path = "~/.config/matugen/templates/slack.tera"
 output_path = "~/.cache/matugen/slack-theme.txt"
-
-# wofi/rofi
-[templates.wofi]
-input_path = "~/.config/matugen/templates/wofi.css"
-output_path = "~/.config/wofi/matugen/colors.css"
 
 # walker
 [templates.walker]
