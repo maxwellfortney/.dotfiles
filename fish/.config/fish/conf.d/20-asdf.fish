@@ -15,4 +15,6 @@ if command -v asdf >/dev/null 2>&1
 
     # Generate asdf completions
     asdf completion fish > ~/.config/fish/completions/asdf.fish
+else
+    echo "⚠️  WARNING: ASDF not found!"
 end
