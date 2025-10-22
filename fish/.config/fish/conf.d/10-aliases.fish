@@ -16,6 +16,8 @@ alias c='clear'
 alias nf='fastfetch'
 alias ff='fastfetch'
 
+alias zed='zeditor'
+
 
 # -----------------------------------------------------
 # Projects
