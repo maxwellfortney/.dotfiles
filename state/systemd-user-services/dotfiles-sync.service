@@ -14,5 +14,4 @@ StandardError=journal
 # Environment
 Environment=HOME=/home/maxwell
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-# Uncomment to enable auto-push:
-# Environment=DOTFILES_AUTO_PUSH=true
+Environment=DOTFILES_AUTO_PUSH=true
