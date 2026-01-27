@@ -17,6 +17,7 @@ This repository contains configuration files for a Hyprland-based desktop enviro
 | `electron-flags` | Electron app flags (Wayland support) |
 | `fish` | Fish shell with aliases, completions, and starship prompt |
 | `fonts` | Geist font family |
+| `git` | Git configuration files |
 | `hyprland` | Hyprland window manager (keybinds, animations, window rules, etc.) |
 | `kitty` | Kitty terminal emulator |
 | `matugen` | Material color scheme generator templates |
@@ -74,6 +75,17 @@ stow kitty       # Stow kitty config
 ```bash
 stow */
 ```
+
+4. **Set up secrets file** (if using fish shell):
+
+The fish configuration includes a secrets file that is gitignored. Copy the example file and add your tokens:
+
+```bash
+cp ~/.config/fish/conf.d/99-secrets.fish.example ~/.config/fish/conf.d/99-secrets.fish
+# Edit 99-secrets.fish and add your actual tokens (e.g., NPM_TOKEN)
+```
+
+If the secrets file is missing, you'll see a warning when starting a new fish shell session.
 
 ## Unstowing
 
