@@ -55,6 +55,13 @@ check_dependencies() {
 # Create Service Unit
 # -----------------------------------------------------
 create_service() {
+    local auto_push_line=""
+    if [ "$ENABLE_AUTO_PUSH" = true ]; then
+        auto_push_line="Environment=DOTFILES_AUTO_PUSH=true"
+    else
+        auto_push_line="# Environment=DOTFILES_AUTO_PUSH=true"
+    fi
+    
     cat > "$SYSTEMD_USER_DIR/$SERVICE_NAME.service" << EOF
 [Unit]
 Description=Dotfiles state sync
@@ -72,8 +79,7 @@ StandardError=journal
 # Environment
 Environment=HOME=$HOME
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-# Uncomment to enable auto-push:
-# Environment=DOTFILES_AUTO_PUSH=true
+$auto_push_line
 EOF
     success "Created $SERVICE_NAME.service"
 }
@@ -219,11 +225,23 @@ main() {
     case "$command" in
         install)
             check_dependencies
-            install_timer
+            
+            # Ask about auto-push
             echo ""
-            echo "To enable auto-push to remote, edit the service file:"
-            echo "  systemctl --user edit $SERVICE_NAME.service"
-            echo "And add: Environment=DOTFILES_AUTO_PUSH=true"
+            echo "Auto-push will automatically push changes to your git remote"
+            echo "after each sync. This requires SSH keys to be set up."
+            echo ""
+            read -rp "Enable auto-push to remote? [y/N] " enable_push
+            if [[ "$enable_push" =~ ^[Yy]$ ]]; then
+                ENABLE_AUTO_PUSH=true
+                success "Auto-push enabled"
+            else
+                ENABLE_AUTO_PUSH=false
+                log "Auto-push disabled (local commits only)"
+            fi
+            echo ""
+            
+            install_timer
             echo ""
             echo "To view logs:"
             echo "  journalctl --user -u $SERVICE_NAME.service -f"
