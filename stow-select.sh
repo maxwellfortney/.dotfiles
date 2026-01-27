@@ -5,6 +5,36 @@
 
 set -e
 
+# Parse arguments
+ADOPT_FLAG=""
+FORCE_FLAG=""
+while [[ "$1" =~ ^- ]]; do
+    case "$1" in
+        --adopt)
+            ADOPT_FLAG="--adopt"
+            shift
+            ;;
+        --force)
+            FORCE_FLAG="true"
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [--adopt] [--force]"
+            echo ""
+            echo "Options:"
+            echo "  --adopt    Adopt existing files into the dotfiles repo"
+            echo "             (moves existing files into the repo and creates symlinks)"
+            echo "  --force    Remove existing files before stowing (backs up to ~/.config-backup)"
+            echo "  -h, --help Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -28,10 +58,38 @@ check_stow() {
     fi
 }
 
+# Function to remove conflicting files before stowing
+remove_conflicts() {
+    local pkg="$1"
+    local backup_dir="$HOME/.config-backup/$(date +%Y%m%d-%H%M%S)"
+    local had_conflicts=false
+    
+    # Find all files in the package directory
+    while IFS= read -r -d '' file; do
+        # Get the relative path from the package directory
+        local rel_path="${file#$pkg/}"
+        local target="$HOME/$rel_path"
+        
+        # Check if target exists and is NOT a symlink
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            had_conflicts=true
+            # Create backup directory if needed
+            mkdir -p "$backup_dir/$(dirname "$rel_path")"
+            # Move file to backup
+            mv "$target" "$backup_dir/$rel_path"
+        fi
+    done < <(find "$pkg" -type f -print0)
+    
+    if [ "$had_conflicts" = true ]; then
+        print_status $BLUE "Backed up conflicting files to $backup_dir"
+    fi
+}
+
 # Function to get directories from git
 get_git_dirs() {
-    # Get directories that are tracked by git
-    git ls-tree -d --name-only HEAD | grep -v '^$'
+    # List all top-level directories (excluding .git)
+    # This includes both tracked and untracked directories
+    find . -maxdepth 1 -type d ! -name '.' ! -name '.git' -printf '%f\n' | sort
 }
 
 # Function to stow selected directories
@@ -44,11 +102,23 @@ stow_selected() {
     fi
     
     print_status $BLUE "Stowing selected directories..."
+    if [ -n "$ADOPT_FLAG" ]; then
+        print_status $YELLOW "Using --adopt: existing files will be moved into the repo"
+    fi
+    if [ -n "$FORCE_FLAG" ]; then
+        print_status $YELLOW "Using --force: conflicting files will be backed up and removed"
+    fi
     echo
     
     for dir in "${selected[@]}"; do
         print_status $YELLOW "Stowing $dir..."
-        if stow "$dir"; then
+        
+        # If force flag is set, remove conflicting files first
+        if [ -n "$FORCE_FLAG" ]; then
+            remove_conflicts "$dir"
+        fi
+        
+        if stow $ADOPT_FLAG "$dir"; then
             print_status $GREEN "✓ Successfully stowed $dir"
         else
             print_status $RED "✗ Failed to stow $dir"

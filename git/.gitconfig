@@ -1,0 +1,7 @@
+[user]
+  name = Maxwell Fortney
+  email = maxwellfortney@gmail.com
+  useConfigOnly = true
+
+[includeIf "gitdir:/home/maxwell/code/paella/"]
+  path = ~/.gitconfig-paella
