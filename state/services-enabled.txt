@@ -1,5 +1,6 @@
 bluetooth.service
 cloudflared.service
+docker.service
 getty@.service
 mullvad-daemon.service
 mullvad-early-boot-blocking.service

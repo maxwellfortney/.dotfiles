@@ -9,6 +9,8 @@ cloudflared
 cuda
 dkms
 dmidecode
+docker
+docker-compose
 dolphin
 dunst
 efibootmgr
