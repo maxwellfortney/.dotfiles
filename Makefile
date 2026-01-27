@@ -35,10 +35,12 @@ help:
 	@echo "  vm-status          Show VM status"
 	@echo ""
 	@echo "Operations:"
-	@echo "  capture            Capture current system state"
+	@echo "  capture            Capture current system state (to state/<hostname>/)"
 	@echo "  sync               Capture state and commit changes"
 	@echo "  install            Run full restoration"
 	@echo "  install-dry-run    Show what restoration would do"
+	@echo "  migrate-state      Migrate legacy state to hostname-based structure"
+	@echo "  list-machines      List available machine states"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  clean              Remove generated files"
@@ -90,13 +92,22 @@ test-shell: build-test-image
 # Operation Targets
 # -----------------------------------------------------
 
-# Capture current system state
+# Capture current system state (saves to state/<hostname>/)
 capture:
 	./scripts/capture-state.sh
 
 # Capture and commit
 sync:
 	./scripts/sync-state.sh
+
+# Migrate legacy state files to hostname-based structure
+migrate-state:
+	./scripts/migrate-state.sh
+
+# List available machine states
+list-machines:
+	@echo "Available machine states:"
+	@for dir in state/*/; do [ -d "$$dir" ] && echo "  - $$(basename $$dir)"; done 2>/dev/null || echo "  (none)"
 
 # Run full restoration
 install:

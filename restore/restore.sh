@@ -38,6 +38,7 @@ SKIP_PACKAGES=false
 SKIP_SERVICES=false
 SKIP_SYSTEM=false
 SKIP_DOTFILES=false
+TARGET_MACHINE=""
 
 while [[ "$1" =~ ^- ]]; do
     case "$1" in
@@ -61,16 +62,35 @@ while [[ "$1" =~ ^- ]]; do
             SKIP_DOTFILES=true
             shift
             ;;
+        --machine=*)
+            TARGET_MACHINE="${1#*=}"
+            export DOTFILES_MACHINE="$TARGET_MACHINE"
+            shift
+            ;;
+        --list-machines)
+            echo "Available machines:"
+            for dir in "$DOTFILES_DIR/state"/*/; do
+                [ -d "$dir" ] && echo "  - $(basename "$dir")"
+            done
+            exit 0
+            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --dry-run        Show what would be done without making changes"
-            echo "  --skip-packages  Skip package installation"
-            echo "  --skip-services  Skip service enabling"
-            echo "  --skip-system    Skip system configuration"
-            echo "  --skip-dotfiles  Skip dotfiles stowing"
-            echo "  -h, --help       Show this help message"
+            echo "  --dry-run          Show what would be done without making changes"
+            echo "  --skip-packages    Skip package installation"
+            echo "  --skip-services    Skip service enabling"
+            echo "  --skip-system      Skip system configuration"
+            echo "  --skip-dotfiles    Skip dotfiles stowing"
+            echo "  --machine=NAME     Restore from a specific machine's state"
+            echo "  --list-machines    List available machine states"
+            echo "  -h, --help         Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0                      # Restore current machine ($(hostname))"
+            echo "  $0 --machine=laptop     # Restore laptop's state to this machine"
+            echo "  $0 --dry-run            # Preview what would be done"
             exit 0
             ;;
         *)
@@ -79,6 +99,23 @@ while [[ "$1" =~ ^- ]]; do
             ;;
     esac
 done
+
+# Get hostname using multiple methods
+get_hostname() {
+    if command -v hostname &>/dev/null; then
+        hostname
+    elif [ -f /etc/hostname ]; then
+        cat /etc/hostname | tr -d '[:space:]'
+    elif command -v hostnamectl &>/dev/null; then
+        hostnamectl --static 2>/dev/null || echo "unknown"
+    else
+        echo "unknown"
+    fi
+}
+
+# Set default machine to current hostname
+TARGET_MACHINE="${TARGET_MACHINE:-$(get_hostname)}"
+export DOTFILES_MACHINE="$TARGET_MACHINE"
 
 log() {
     echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"
@@ -145,11 +182,26 @@ preflight_checks() {
     success "All required tools installed"
     
     # Check state files exist
-    if [ ! -d "$DOTFILES_DIR/state" ] || [ ! -f "$DOTFILES_DIR/state/packages-pacman.txt" ]; then
+    local state_dir="$DOTFILES_DIR/state/$TARGET_MACHINE"
+    if [ -d "$state_dir" ]; then
+        success "Using state from machine: $TARGET_MACHINE"
+        log "State directory: $state_dir"
+    elif [ -d "$DOTFILES_DIR/state" ] && [ -f "$DOTFILES_DIR/state/packages-pacman.txt" ]; then
+        warn "No machine-specific state found for '$TARGET_MACHINE', using legacy state/"
+    else
         warn "State files not found - was capture-state.sh run?"
         echo "Some restoration steps may be skipped"
-    else
-        success "State files found"
+    fi
+    
+    # List available machines if current not found
+    if [ ! -d "$state_dir" ]; then
+        echo ""
+        echo "Available machine states:"
+        for dir in "$DOTFILES_DIR/state"/*/; do
+            [ -d "$dir" ] && echo "  - $(basename "$dir")"
+        done
+        echo ""
+        echo "Use --machine=NAME to restore from a different machine"
     fi
     
     if [ "$DRY_RUN" = true ]; then

@@ -22,7 +22,32 @@ NC='\033[0m'
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
-STATE_DIR="$DOTFILES_DIR/state"
+
+# Get hostname using multiple methods
+get_hostname() {
+    if command -v hostname &>/dev/null; then
+        hostname
+    elif [ -f /etc/hostname ]; then
+        cat /etc/hostname | tr -d '[:space:]'
+    elif command -v hostnamectl &>/dev/null; then
+        hostnamectl --static 2>/dev/null || echo "unknown"
+    else
+        echo "unknown"
+    fi
+}
+
+# Determine state directory (hostname-based with fallback)
+# Can be overridden with --machine=<name> argument
+TARGET_MACHINE="${DOTFILES_MACHINE:-$(get_hostname)}"
+if [ -d "$DOTFILES_DIR/state/$TARGET_MACHINE" ]; then
+    STATE_DIR="$DOTFILES_DIR/state/$TARGET_MACHINE"
+elif [ -d "$DOTFILES_DIR/state" ]; then
+    # Fallback to legacy flat structure
+    STATE_DIR="$DOTFILES_DIR/state"
+else
+    echo "ERROR: No state directory found"
+    exit 1
+fi
 
 log() {
     echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"

@@ -18,10 +18,24 @@ NC='\033[0m'
 # Get script directory (resolve symlinks)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
-STATE_DIR="$DOTFILES_DIR/state"
+
+# Use hostname-based state directory for multi-machine support
+# Try multiple methods to get hostname
+if command -v hostname &>/dev/null; then
+    MACHINE_NAME=$(hostname)
+elif [ -f /etc/hostname ]; then
+    MACHINE_NAME=$(cat /etc/hostname | tr -d '[:space:]')
+elif command -v hostnamectl &>/dev/null; then
+    MACHINE_NAME=$(hostnamectl --static 2>/dev/null || echo "unknown")
+else
+    MACHINE_NAME="unknown"
+fi
+STATE_DIR="$DOTFILES_DIR/state/$MACHINE_NAME"
 
 # Ensure state directory exists
 mkdir -p "$STATE_DIR"
+mkdir -p "$STATE_DIR/systemd-services"
+mkdir -p "$STATE_DIR/systemd-user-services"
 
 log() {
     echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"

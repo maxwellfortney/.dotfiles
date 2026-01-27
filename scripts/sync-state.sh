@@ -69,10 +69,18 @@ sync_state() {
         return 0
     fi
     
-    # Generate commit message
+    # Generate commit message with hostname
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local commit_msg="Auto-sync: Update system state ($timestamp)"
+    local machine
+    if command -v hostname &>/dev/null; then
+        machine=$(hostname)
+    elif [ -f /etc/hostname ]; then
+        machine=$(cat /etc/hostname | tr -d '[:space:]')
+    else
+        machine="unknown"
+    fi
+    local commit_msg="Auto-sync [$machine]: Update system state ($timestamp)"
     
     # Count changes
     local changes
