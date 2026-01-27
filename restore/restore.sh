@@ -11,7 +11,13 @@
 #   ./restore/restore.sh --dry-run # Show what would be done
 #   ./restore/restore.sh --skip-packages # Skip package installation
 
-set -e
+# Don't exit on error - we want to continue and show summary
+# set -e
+
+# Track failures for summary
+declare -a FAILURES=()
+declare -a WARNINGS=()
+declare -a SUCCESSES=()
 
 # Colors
 RED='\033[0;31m'
@@ -172,10 +178,15 @@ run_restore() {
             log "  - $pacman_count pacman packages"
             log "  - $aur_count AUR packages"
         else
-            "$SCRIPT_DIR/restore-packages.sh"
+            if "$SCRIPT_DIR/restore-packages.sh"; then
+                SUCCESSES+=("Packages installed")
+            else
+                FAILURES+=("Some packages failed to install")
+                warn "Package installation had errors, continuing..."
+            fi
         fi
     fi
-    ((step_num++))
+    ((step_num++)) || true
     
     # Step 2: Enable Services
     if [ "$SKIP_SERVICES" = true ]; then
@@ -191,10 +202,15 @@ run_restore() {
             log "  - $service_count system services"
             log "  - $user_service_count user services"
         else
-            "$SCRIPT_DIR/restore-services.sh"
+            if "$SCRIPT_DIR/restore-services.sh"; then
+                SUCCESSES+=("Services enabled")
+            else
+                FAILURES+=("Some services failed to enable")
+                warn "Service enabling had errors, continuing..."
+            fi
         fi
     fi
-    ((step_num++))
+    ((step_num++)) || true
     
     # Step 3: System Configuration
     if [ "$SKIP_SYSTEM" = true ]; then
@@ -209,10 +225,15 @@ run_restore() {
             log "  - hostname, locale, timezone"
             log "  - user groups"
         else
-            "$SCRIPT_DIR/restore-system.sh"
+            if "$SCRIPT_DIR/restore-system.sh"; then
+                SUCCESSES+=("System configuration applied")
+            else
+                FAILURES+=("Some system configuration failed")
+                warn "System configuration had errors, continuing..."
+            fi
         fi
     fi
-    ((step_num++))
+    ((step_num++)) || true
     
     # Step 4: Stow Dotfiles
     if [ "$SKIP_DOTFILES" = true ]; then
@@ -226,10 +247,15 @@ run_restore() {
             pkg_count=$(find "$DOTFILES_DIR" -maxdepth 1 -type d ! -name '.' ! -name '.git' ! -name 'restore' ! -name 'scripts' ! -name 'state' ! -name 'logs' | wc -l)
             log "  - $pkg_count stow packages"
         else
-            "$SCRIPT_DIR/restore-dotfiles.sh"
+            if "$SCRIPT_DIR/restore-dotfiles.sh"; then
+                SUCCESSES+=("Dotfiles stowed")
+            else
+                FAILURES+=("Some dotfiles failed to stow")
+                warn "Dotfiles stowing had errors, continuing..."
+            fi
         fi
     fi
-    ((step_num++))
+    ((step_num++)) || true
     
     # Step 5: Manual Steps
     step "$step_num" "Manual Steps Required"
@@ -252,26 +278,62 @@ run_restore() {
 # -----------------------------------------------------
 print_summary() {
     echo ""
-    echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}${BOLD}  Restoration Complete!${NC}"
-    echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
+    
+    # Determine overall status
+    if [ ${#FAILURES[@]} -eq 0 ]; then
+        echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
+        echo -e "${GREEN}${BOLD}  Restoration Complete!${NC}"
+        echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════${NC}"
+    else
+        echo -e "${YELLOW}${BOLD}═══════════════════════════════════════════════════════════${NC}"
+        echo -e "${YELLOW}${BOLD}  Restoration Completed with Errors${NC}"
+        echo -e "${YELLOW}${BOLD}═══════════════════════════════════════════════════════════${NC}"
+    fi
     echo ""
     
     if [ "$DRY_RUN" = true ]; then
         echo "This was a dry run. No changes were made."
         echo "Run without --dry-run to perform the actual restoration."
-    else
-        echo "Your system has been restored from the dotfiles state."
         echo ""
-        echo "Next steps:"
-        echo "  1. Review any warnings above"
-        echo "  2. Complete manual steps in restore/restore-manual.md"
-        echo "  3. Reboot to apply all changes"
-        echo ""
-        echo "To set up automatic state sync:"
-        echo "  ./scripts/setup-auto-sync.sh"
+        return
     fi
+    
+    # Show successes
+    if [ ${#SUCCESSES[@]} -gt 0 ]; then
+        echo -e "${GREEN}Successes:${NC}"
+        for item in "${SUCCESSES[@]}"; do
+            echo -e "  ${GREEN}✓${NC} $item"
+        done
+        echo ""
+    fi
+    
+    # Show failures
+    if [ ${#FAILURES[@]} -gt 0 ]; then
+        echo -e "${RED}Failures:${NC}"
+        for item in "${FAILURES[@]}"; do
+            echo -e "  ${RED}✗${NC} $item"
+        done
+        echo ""
+        echo -e "${YELLOW}Review the output above for details on what failed.${NC}"
+        echo -e "${YELLOW}You may need to manually fix these issues.${NC}"
+        echo ""
+    fi
+    
+    echo "Your system has been restored from the dotfiles state."
     echo ""
+    echo "Next steps:"
+    echo "  1. Review any warnings/failures above"
+    echo "  2. Complete manual steps in restore/restore-manual.md"
+    echo "  3. Reboot to apply all changes"
+    echo ""
+    echo "To set up automatic state sync:"
+    echo "  ./scripts/setup-auto-sync.sh"
+    echo ""
+    
+    # Exit with error code if there were failures
+    if [ ${#FAILURES[@]} -gt 0 ]; then
+        return 1
+    fi
 }
 
 # -----------------------------------------------------

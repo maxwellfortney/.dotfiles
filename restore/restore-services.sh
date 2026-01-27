@@ -5,7 +5,8 @@
 # Enables systemd services from state files
 # Idempotent - skips already enabled services
 
-set -e
+# Don't exit on error - continue and report failures
+# set -e
 
 # Colors
 RED='\033[0;31m'
@@ -55,6 +56,66 @@ should_skip() {
         fi
     done
     return 1
+}
+
+# -----------------------------------------------------
+# Restore Custom Service Files
+# -----------------------------------------------------
+restore_custom_services() {
+    local services_dir="$STATE_DIR/systemd-services"
+    local user_services_dir="$STATE_DIR/systemd-user-services"
+    
+    log "Restoring custom systemd service files..."
+    
+    local count=0
+    
+    # Restore system-level services
+    if [ -d "$services_dir" ]; then
+        for unit in "$services_dir"/*.service "$services_dir"/*.timer; do
+            if [ -f "$unit" ]; then
+                local name
+                name=$(basename "$unit")
+                sudo cp "$unit" /etc/systemd/system/
+                success "Restored system unit: $name"
+                ((count++)) || true
+            fi
+        done
+        
+        # Restore drop-in overrides
+        for dir in "$services_dir"/*.d; do
+            if [ -d "$dir" ]; then
+                local name
+                name=$(basename "$dir")
+                sudo mkdir -p "/etc/systemd/system/$name"
+                sudo cp "$dir"/*.conf "/etc/systemd/system/$name/" 2>/dev/null || true
+                success "Restored overrides for: $name"
+            fi
+        done
+    fi
+    
+    # Restore user-level services
+    local user_count=0
+    if [ -d "$user_services_dir" ]; then
+        mkdir -p "$HOME/.config/systemd/user"
+        for unit in "$user_services_dir"/*.service "$user_services_dir"/*.timer; do
+            if [ -f "$unit" ]; then
+                local name
+                name=$(basename "$unit")
+                cp "$unit" "$HOME/.config/systemd/user/"
+                success "Restored user unit: $name"
+                ((user_count++)) || true
+            fi
+        done
+    fi
+    
+    if [ $count -gt 0 ] || [ $user_count -gt 0 ]; then
+        # Reload systemd to pick up new units
+        log "Reloading systemd daemon..."
+        sudo systemctl daemon-reload
+        systemctl --user daemon-reload 2>/dev/null || true
+    fi
+    
+    success "Restored $count system units, $user_count user units"
 }
 
 # -----------------------------------------------------
@@ -226,6 +287,7 @@ main() {
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
     echo ""
     
+    restore_custom_services
     enable_system_services
     enable_user_services
     enable_timers

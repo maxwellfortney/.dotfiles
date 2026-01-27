@@ -5,7 +5,8 @@
 # Stows all dotfiles and handles secrets setup
 # Idempotent - stow handles existing symlinks gracefully
 
-set -e
+# Don't exit on error - continue and report failures
+# set -e
 
 # Colors
 RED='\033[0;31m'
@@ -40,6 +41,8 @@ SKIP_DIRS=(
     "scripts"
     "state"
     "logs"
+    "tests"
+    "vm"
     ".git"
 )
 
@@ -70,6 +73,8 @@ check_dependencies() {
 # -----------------------------------------------------
 stow_packages() {
     log "Stowing dotfiles packages..."
+    log "Source: $DOTFILES_DIR"
+    log "Target: $HOME"
     
     cd "$DOTFILES_DIR"
     
@@ -90,18 +95,19 @@ stow_packages() {
         
         log "Stowing $dir..."
         
-        if stow --restow "$dir" 2>/dev/null; then
+        # Explicitly set target to $HOME (important when running from /mnt/dotfiles)
+        if stow --target="$HOME" --restow "$dir" 2>&1; then
             success "Stowed: $dir"
-            ((count++))
+            ((count++)) || true
         else
             # Try with --adopt to handle existing files
             warn "Conflict in $dir, trying with --adopt..."
-            if stow --adopt --restow "$dir" 2>/dev/null; then
+            if stow --target="$HOME" --adopt --restow "$dir" 2>&1; then
                 success "Stowed (adopted): $dir"
-                ((count++))
+                ((count++)) || true
             else
                 error "Failed to stow: $dir"
-                ((failed++))
+                ((failed++)) || true
             fi
         fi
     done

@@ -11,7 +11,8 @@
 #
 # Idempotent - checks current state before making changes
 
-set -e
+# Don't exit on error - continue and report failures
+# set -e
 
 # Colors
 RED='\033[0;31m'

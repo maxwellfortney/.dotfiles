@@ -40,6 +40,59 @@ error() {
 }
 
 # -----------------------------------------------------
+# Capture Custom Pacman Repositories
+# -----------------------------------------------------
+capture_pacman_repos() {
+    log "Capturing custom pacman repositories..."
+    
+    local repos_file="$STATE_DIR/pacman-repos.conf"
+    
+    # Extract non-standard repo sections from pacman.conf
+    # Standard repos are: core, extra, multilib, community (deprecated), testing variants
+    local standard_repos="core|extra|multilib|community|testing|core-testing|extra-testing|multilib-testing|kde-unstable|gnome-unstable"
+    
+    {
+        echo "# Custom pacman repositories"
+        echo "# Generated: $(date)"
+        echo "# Add these to /etc/pacman.conf before installing packages"
+        echo ""
+    } > "$repos_file"
+    
+    # Parse pacman.conf for custom repo sections
+    local in_custom_repo=0
+    local current_section=""
+    
+    while IFS= read -r line; do
+        # Check for section headers
+        if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+)\]$ ]]; then
+            current_section="${BASH_REMATCH[1]}"
+            # Check if this is a custom repo (not standard)
+            if [[ ! "$current_section" =~ ^($standard_repos)$ && "$current_section" != "options" ]]; then
+                in_custom_repo=1
+                echo "" >> "$repos_file"
+                echo "$line" >> "$repos_file"
+            else
+                in_custom_repo=0
+            fi
+        elif [[ $in_custom_repo -eq 1 ]]; then
+            # Copy lines from custom repo sections
+            echo "$line" >> "$repos_file"
+        fi
+    done < /etc/pacman.conf
+    
+    # Count custom repos
+    local count
+    count=$(grep -c '^\[' "$repos_file" 2>/dev/null || echo "0")
+    
+    if [ "$count" -gt 0 ]; then
+        success "Captured $count custom pacman repos -> pacman-repos.conf"
+    else
+        echo "# No custom repositories found" >> "$repos_file"
+        success "No custom pacman repos found"
+    fi
+}
+
+# -----------------------------------------------------
 # Capture Pacman Packages
 # -----------------------------------------------------
 capture_pacman_packages() {
@@ -262,6 +315,84 @@ capture_system_info() {
 }
 
 # -----------------------------------------------------
+# Capture Pacman Mirrorlist
+# -----------------------------------------------------
+capture_mirrorlist() {
+    log "Capturing pacman mirrorlist..."
+    
+    local mirrorlist_file="$STATE_DIR/mirrorlist"
+    
+    if [ -f /etc/pacman.d/mirrorlist ]; then
+        cp /etc/pacman.d/mirrorlist "$mirrorlist_file"
+        local count
+        count=$(grep -c "^Server" "$mirrorlist_file" 2>/dev/null || echo "0")
+        success "Captured mirrorlist ($count active mirrors)"
+    else
+        warn "No mirrorlist found at /etc/pacman.d/mirrorlist"
+    fi
+}
+
+# -----------------------------------------------------
+# Capture Custom Systemd Service Files
+# -----------------------------------------------------
+capture_custom_services() {
+    log "Capturing custom systemd service files..."
+    
+    local services_dir="$STATE_DIR/systemd-services"
+    local user_services_dir="$STATE_DIR/systemd-user-services"
+    
+    mkdir -p "$services_dir"
+    mkdir -p "$user_services_dir"
+    
+    # Clear old files
+    rm -f "$services_dir"/*.service "$services_dir"/*.timer 2>/dev/null || true
+    rm -f "$user_services_dir"/*.service "$user_services_dir"/*.timer 2>/dev/null || true
+    
+    local count=0
+    
+    # Capture system-level custom services from /etc/systemd/system/
+    # (excluding symlinks which are just enabled services pointing elsewhere)
+    if [ -d /etc/systemd/system ]; then
+        for unit in /etc/systemd/system/*.service /etc/systemd/system/*.timer; do
+            if [ -f "$unit" ] && [ ! -L "$unit" ]; then
+                cp "$unit" "$services_dir/"
+                ((count++)) || true
+                log "  Captured $(basename "$unit")"
+            fi
+        done
+    fi
+    
+    # Also check for drop-in overrides
+    for dir in /etc/systemd/system/*.d; do
+        if [ -d "$dir" ]; then
+            local unit_name
+            unit_name=$(basename "$dir" .d)
+            mkdir -p "$services_dir/${unit_name}.d"
+            cp "$dir"/*.conf "$services_dir/${unit_name}.d/" 2>/dev/null || true
+            log "  Captured overrides for $unit_name"
+        fi
+    done
+    
+    success "Captured $count custom system services -> systemd-services/"
+    
+    # Capture user-level custom services
+    local user_count=0
+    local user_systemd="$HOME/.config/systemd/user"
+    
+    if [ -d "$user_systemd" ]; then
+        for unit in "$user_systemd"/*.service "$user_systemd"/*.timer; do
+            if [ -f "$unit" ] && [ ! -L "$unit" ]; then
+                cp "$unit" "$user_services_dir/"
+                ((user_count++)) || true
+                log "  Captured user $(basename "$unit")"
+            fi
+        done
+    fi
+    
+    success "Captured $user_count custom user services -> systemd-user-services/"
+}
+
+# -----------------------------------------------------
 # Capture Additional Configs
 # -----------------------------------------------------
 capture_additional() {
@@ -295,6 +426,7 @@ main() {
     log "State directory: $STATE_DIR"
     echo ""
     
+    capture_pacman_repos
     capture_pacman_packages
     capture_aur_packages
     capture_system_services
@@ -303,6 +435,8 @@ main() {
     capture_kernel_params
     capture_sysctl
     capture_system_info
+    capture_mirrorlist
+    capture_custom_services
     capture_additional
     
     echo ""

@@ -5,7 +5,12 @@
 # Installs packages from state files
 # Idempotent - skips already installed packages
 
-set -e
+# Don't exit on error - continue and report failures
+# set -e
+
+# Track failures
+PACKAGE_FAILURES=()
+PACKAGE_SUCCESSES=0
 
 # Colors
 RED='\033[0;31m'
@@ -41,6 +46,91 @@ check_sudo() {
         error "This script requires sudo access"
         exit 1
     fi
+}
+
+# -----------------------------------------------------
+# Restore Pacman Mirrorlist
+# -----------------------------------------------------
+restore_mirrorlist() {
+    local mirrorlist_file="$STATE_DIR/mirrorlist"
+    
+    if [ ! -f "$mirrorlist_file" ]; then
+        log "No mirrorlist file found in state, keeping default"
+        return 0
+    fi
+    
+    log "Restoring pacman mirrorlist..."
+    
+    # Backup current mirrorlist
+    if [ -f /etc/pacman.d/mirrorlist ]; then
+        sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+    fi
+    
+    # Restore mirrorlist
+    sudo cp "$mirrorlist_file" /etc/pacman.d/mirrorlist
+    
+    local count
+    count=$(grep -c "^Server" /etc/pacman.d/mirrorlist 2>/dev/null || echo "0")
+    success "Restored mirrorlist ($count mirrors)"
+}
+
+# -----------------------------------------------------
+# Restore Custom Pacman Repositories
+# -----------------------------------------------------
+restore_pacman_repos() {
+    local repos_file="$STATE_DIR/pacman-repos.conf"
+    
+    if [ ! -f "$repos_file" ]; then
+        log "No custom pacman repos file found"
+        return 0
+    fi
+    
+    # Check if there are any actual repos (not just comments)
+    local repo_count
+    repo_count=$(grep -c '^\[' "$repos_file" 2>/dev/null || echo "0")
+    
+    if [ "$repo_count" -eq 0 ]; then
+        log "No custom repositories to restore"
+        return 0
+    fi
+    
+    log "Restoring $repo_count custom pacman repositories..."
+    
+    # Check which repos are already in pacman.conf
+    local repos_to_add=""
+    local already_configured=0
+    
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+)\]$ ]]; then
+            local repo_name="${BASH_REMATCH[1]}"
+            if grep -q "^\[$repo_name\]" /etc/pacman.conf 2>/dev/null; then
+                log "  Repository [$repo_name] already configured"
+                ((already_configured++)) || true
+            else
+                log "  Adding repository [$repo_name]"
+                repos_to_add+="$line"$'\n'
+            fi
+        elif [[ -n "$repos_to_add" ]]; then
+            # Continue adding lines for the current repo section
+            repos_to_add+="$line"$'\n'
+        fi
+    done < <(grep -v '^#' "$repos_file" | grep -v '^$')
+    
+    if [ -z "$repos_to_add" ]; then
+        success "All custom repositories already configured"
+        return 0
+    fi
+    
+    # Append new repos to pacman.conf
+    echo "" | sudo tee -a /etc/pacman.conf > /dev/null
+    echo "# Custom repositories added by dotfiles restore" | sudo tee -a /etc/pacman.conf > /dev/null
+    echo "$repos_to_add" | sudo tee -a /etc/pacman.conf > /dev/null
+    
+    # Sync package databases
+    log "Syncing package databases..."
+    sudo pacman -Sy
+    
+    success "Custom repositories restored and synced"
 }
 
 # -----------------------------------------------------
@@ -157,12 +247,26 @@ install_aur_packages() {
     
     log "Installing ${#to_install[@]} new AUR packages..."
     
-    # Install AUR packages
-    if $aur_helper -S --needed --noconfirm "${to_install[@]}"; then
-        success "Installed ${#to_install[@]} AUR packages"
+    # Install AUR packages one by one to continue on failure
+    local failed=()
+    local succeeded=0
+    
+    for pkg in "${to_install[@]}"; do
+        log "Installing AUR package: $pkg"
+        if $aur_helper -S --needed --noconfirm "$pkg" 2>&1; then
+            ((succeeded++)) || true
+        else
+            warn "Failed to install: $pkg"
+            failed+=("$pkg")
+            PACKAGE_FAILURES+=("AUR: $pkg")
+        fi
+    done
+    
+    if [ ${#failed[@]} -eq 0 ]; then
+        success "Installed $succeeded AUR packages"
     else
-        error "Some AUR packages failed to install"
-        return 1
+        warn "Installed $succeeded AUR packages, ${#failed[@]} failed"
+        echo "  Failed packages: ${failed[*]}"
     fi
 }
 
@@ -178,14 +282,36 @@ main() {
     
     check_sudo
     
+    restore_mirrorlist
+    restore_pacman_repos
     install_pacman_packages
     install_aur_packages
     
     echo ""
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}  Package restoration complete!${NC}"
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+    
+    # Show summary
+    if [ ${#PACKAGE_FAILURES[@]} -eq 0 ]; then
+        echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+        echo -e "${GREEN}  Package restoration complete!${NC}"
+        echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+    else
+        echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+        echo -e "${YELLOW}  Package restoration completed with errors${NC}"
+        echo -e "${YELLOW}═══════════════════════════════════════════════════════════${NC}"
+        echo ""
+        echo -e "${RED}Failed packages:${NC}"
+        for pkg in "${PACKAGE_FAILURES[@]}"; do
+            echo -e "  ${RED}✗${NC} $pkg"
+        done
+        echo ""
+        echo "You can try installing these manually later."
+    fi
     echo ""
+    
+    # Return error if there were failures
+    if [ ${#PACKAGE_FAILURES[@]} -gt 0 ]; then
+        return 1
+    fi
 }
 
 main "$@"

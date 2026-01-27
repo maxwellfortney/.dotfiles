@@ -7,7 +7,7 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 VM_NAME="dotfiles-test"
 VM_RAM="4096"  # 4GB
 VM_CPUS="2"
-VM_DISK_SIZE="20"  # 20GB
+VM_DISK_SIZE="50"  # 50GB
 # Use system libvirt paths (accessible by libvirt-qemu user)
 VM_DIR="/var/lib/libvirt/images"
 ISO_DIR="$DOTFILES_DIR/vm"
@@ -50,11 +50,20 @@ if $VIRSH list --all --name | grep -q "^${VM_NAME}$"; then
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         echo "Removing existing VM..."
         $VIRSH destroy "$VM_NAME" 2>/dev/null || true
-        $VIRSH undefine "$VM_NAME" --remove-all-storage 2>/dev/null || true
+        $VIRSH undefine "$VM_NAME" --remove-all-storage --nvram 2>/dev/null || true
+        # Force remove disk if still present
+        sudo rm -f "$VM_DIR/${VM_NAME}.qcow2" 2>/dev/null || true
+        sleep 1
     else
         echo "Aborted."
         exit 0
     fi
+fi
+
+# Clean up any orphaned disk from previous failed attempts
+if [ -f "$VM_DIR/${VM_NAME}.qcow2" ]; then
+    echo "Removing orphaned disk..."
+    sudo rm -f "$VM_DIR/${VM_NAME}.qcow2"
 fi
 
 echo "Creating VM with:"
@@ -72,6 +81,7 @@ mkdir -p "$VM_DIR"
 echo "▶ Creating VM..."
 virt-install \
     --connect qemu:///system \
+    --check path_in_use=off \
     --name "$VM_NAME" \
     --memory "$VM_RAM" \
     --vcpus "$VM_CPUS" \

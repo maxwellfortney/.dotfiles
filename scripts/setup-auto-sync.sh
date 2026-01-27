@@ -2,7 +2,7 @@
 # -----------------------------------------------------
 # SETUP AUTO-SYNC
 # -----------------------------------------------------
-# Installs a cron job to run sync-state.sh every 6 hours
+# Installs a systemd user timer to run sync-state.sh every 6 hours
 # Idempotent - safe to run multiple times
 
 set -e
@@ -18,6 +18,10 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 SYNC_SCRIPT="$SCRIPT_DIR/sync-state.sh"
+
+# Systemd user unit directory
+SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+SERVICE_NAME="dotfiles-sync"
 
 log() {
     echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"
@@ -35,32 +39,10 @@ error() {
     echo -e "${RED}✗${NC} $1"
 }
 
-# Cron entry - runs every 6 hours at :00 minutes
-CRON_SCHEDULE="0 */6 * * *"
-CRON_COMMAND="$SYNC_SCRIPT"
-CRON_ENTRY="$CRON_SCHEDULE $CRON_COMMAND"
-CRON_MARKER="# dotfiles-auto-sync"
-
 # -----------------------------------------------------
 # Check Dependencies
 # -----------------------------------------------------
 check_dependencies() {
-    # Check if cron is available
-    if ! command -v crontab &> /dev/null; then
-        error "crontab command not found"
-        echo "Install cronie: sudo pacman -S cronie"
-        echo "Then enable it: sudo systemctl enable --now cronie"
-        exit 1
-    fi
-    
-    # Check if cronie service is running
-    if systemctl is-active --quiet cronie 2>/dev/null; then
-        success "cronie service is running"
-    else
-        warn "cronie service may not be running"
-        echo "Enable it with: sudo systemctl enable --now cronie"
-    fi
-    
     # Check if sync script exists and is executable
     if [ ! -x "$SYNC_SCRIPT" ]; then
         error "Sync script not found or not executable: $SYNC_SCRIPT"
@@ -70,69 +52,101 @@ check_dependencies() {
 }
 
 # -----------------------------------------------------
-# Install Cron Job
+# Create Service Unit
 # -----------------------------------------------------
-install_cron() {
-    log "Installing cron job..."
-    
-    # Get current crontab (suppress error if empty)
-    local current_crontab
-    current_crontab=$(crontab -l 2>/dev/null || echo "")
-    
-    # Check if our cron job already exists
-    if echo "$current_crontab" | grep -q "$CRON_MARKER"; then
-        success "Cron job already installed"
-        echo ""
-        echo "Current cron entry:"
-        echo "$current_crontab" | grep "$CRON_MARKER" -A1
-        return 0
-    fi
-    
-    # Add our cron job
-    local new_crontab="$current_crontab
-$CRON_MARKER
-$CRON_ENTRY
-"
-    
-    # Install new crontab
-    echo "$new_crontab" | crontab -
-    
-    success "Cron job installed"
-    echo ""
-    echo "Added cron entry:"
-    echo "  $CRON_ENTRY"
-    echo ""
-    echo "This will run sync-state.sh every 6 hours (at 00:00, 06:00, 12:00, 18:00)"
+create_service() {
+    cat > "$SYSTEMD_USER_DIR/$SERVICE_NAME.service" << EOF
+[Unit]
+Description=Dotfiles state sync
+Documentation=https://github.com/your-username/dotfiles
+
+[Service]
+Type=oneshot
+ExecStart=$SYNC_SCRIPT
+WorkingDirectory=$DOTFILES_DIR
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment=HOME=$HOME
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# Uncomment to enable auto-push:
+# Environment=DOTFILES_AUTO_PUSH=true
+EOF
+    success "Created $SERVICE_NAME.service"
 }
 
 # -----------------------------------------------------
-# Remove Cron Job
+# Create Timer Unit
 # -----------------------------------------------------
-remove_cron() {
-    log "Removing cron job..."
+create_timer() {
+    cat > "$SYSTEMD_USER_DIR/$SERVICE_NAME.timer" << EOF
+[Unit]
+Description=Run dotfiles sync every 6 hours
+
+[Timer]
+# Run every 6 hours
+OnCalendar=*-*-* 00,06,12,18:00:00
+# Run shortly after boot if a scheduled run was missed
+Persistent=true
+# Random delay up to 5 minutes to avoid exact timing
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
+EOF
+    success "Created $SERVICE_NAME.timer"
+}
+
+# -----------------------------------------------------
+# Install Timer
+# -----------------------------------------------------
+install_timer() {
+    log "Installing systemd user timer..."
     
-    # Get current crontab
-    local current_crontab
-    current_crontab=$(crontab -l 2>/dev/null || echo "")
+    # Create systemd user directory if needed
+    mkdir -p "$SYSTEMD_USER_DIR"
     
-    # Check if our cron job exists
-    if ! echo "$current_crontab" | grep -q "$CRON_MARKER"; then
-        warn "Cron job not found"
-        return 0
-    fi
+    # Create units
+    create_service
+    create_timer
     
-    # Remove our cron job (marker line and the line after it)
-    local new_crontab
-    new_crontab=$(echo "$current_crontab" | grep -v "$CRON_MARKER" | grep -v "sync-state.sh")
+    # Reload systemd user daemon
+    systemctl --user daemon-reload
     
-    # Install new crontab (or remove if empty)
-    if [ -z "$(echo "$new_crontab" | tr -d '[:space:]')" ]; then
-        crontab -r 2>/dev/null || true
-    else
-        echo "$new_crontab" | crontab -
-    fi
+    # Enable and start the timer
+    systemctl --user enable "$SERVICE_NAME.timer"
+    systemctl --user start "$SERVICE_NAME.timer"
     
-    success "Cron job removed"
+    success "Timer installed and started"
+    echo ""
+    echo "The sync will run every 6 hours (00:00, 06:00, 12:00, 18:00)"
+    echo "Plus a random delay of up to 5 minutes."
+    echo ""
+    echo "Next scheduled run:"
+    systemctl --user list-timers "$SERVICE_NAME.timer" --no-pager
+}
+
+# -----------------------------------------------------
+# Remove Timer
+# -----------------------------------------------------
+remove_timer() {
+    log "Removing systemd user timer..."
+    
+    # Stop and disable
+    systemctl --user stop "$SERVICE_NAME.timer" 2>/dev/null || true
+    systemctl --user disable "$SERVICE_NAME.timer" 2>/dev/null || true
+    
+    # Remove unit files
+    rm -f "$SYSTEMD_USER_DIR/$SERVICE_NAME.service"
+    rm -f "$SYSTEMD_USER_DIR/$SERVICE_NAME.timer"
+    
+    # Reload
+    systemctl --user daemon-reload
+    
+    success "Timer removed"
 }
 
 # -----------------------------------------------------
@@ -140,27 +154,38 @@ remove_cron() {
 # -----------------------------------------------------
 show_status() {
     echo ""
-    echo -e "${BLUE}Current crontab:${NC}"
+    echo -e "${BLUE}Timer Status:${NC}"
     echo ""
-    crontab -l 2>/dev/null || echo "(empty)"
-    echo ""
+    systemctl --user status "$SERVICE_NAME.timer" --no-pager 2>/dev/null || echo "(timer not installed)"
     
-    echo -e "${BLUE}Recent sync log:${NC}"
     echo ""
-    if [ -f "$DOTFILES_DIR/logs/sync-state.log" ]; then
-        tail -20 "$DOTFILES_DIR/logs/sync-state.log"
-    else
-        echo "(no log file yet)"
-    fi
+    echo -e "${BLUE}Next Scheduled Runs:${NC}"
+    echo ""
+    systemctl --user list-timers "$SERVICE_NAME.timer" --no-pager 2>/dev/null || echo "(no timers)"
+    
+    echo ""
+    echo -e "${BLUE}Recent Logs:${NC}"
+    echo ""
+    journalctl --user -u "$SERVICE_NAME.service" --no-pager -n 20 2>/dev/null || echo "(no logs yet)"
 }
 
 # -----------------------------------------------------
 # Test Sync
 # -----------------------------------------------------
 test_sync() {
-    log "Running sync script manually..."
+    log "Running sync service manually..."
     echo ""
-    "$SYNC_SCRIPT"
+    systemctl --user start "$SERVICE_NAME.service"
+    echo ""
+    echo "Check the logs with:"
+    echo "  journalctl --user -u $SERVICE_NAME.service -f"
+}
+
+# -----------------------------------------------------
+# View Logs
+# -----------------------------------------------------
+view_logs() {
+    journalctl --user -u "$SERVICE_NAME.service" --no-pager -n 50
 }
 
 # -----------------------------------------------------
@@ -170,10 +195,11 @@ usage() {
     echo "Usage: $0 [COMMAND]"
     echo ""
     echo "Commands:"
-    echo "  install   Install the cron job (default)"
-    echo "  remove    Remove the cron job"
+    echo "  install   Install the systemd timer (default)"
+    echo "  remove    Remove the systemd timer"
     echo "  status    Show current status"
     echo "  test      Run sync manually"
+    echo "  logs      View recent logs"
     echo "  help      Show this help"
     echo ""
 }
@@ -184,7 +210,7 @@ usage() {
 main() {
     echo ""
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${BLUE}  Setup Auto-Sync${NC}"
+    echo -e "${BLUE}  Setup Auto-Sync (systemd timer)${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
     echo ""
     
@@ -193,22 +219,26 @@ main() {
     case "$command" in
         install)
             check_dependencies
-            install_cron
+            install_timer
             echo ""
-            echo "To enable auto-push to remote, set environment variable:"
-            echo "  export DOTFILES_AUTO_PUSH=true"
+            echo "To enable auto-push to remote, edit the service file:"
+            echo "  systemctl --user edit $SERVICE_NAME.service"
+            echo "And add: Environment=DOTFILES_AUTO_PUSH=true"
             echo ""
-            echo "To test the sync manually:"
-            echo "  $SYNC_SCRIPT"
+            echo "To view logs:"
+            echo "  journalctl --user -u $SERVICE_NAME.service -f"
             ;;
         remove)
-            remove_cron
+            remove_timer
             ;;
         status)
             show_status
             ;;
         test)
             test_sync
+            ;;
+        logs)
+            view_logs
             ;;
         help|--help|-h)
             usage
