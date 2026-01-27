@@ -1,0 +1,7 @@
+# Current kernel command line (from /proc/cmdline)
+initrd=\initramfs-linux.img root=PARTUUID=d4d74a52-6fb7-45d8-82b5-b6900a826f1f zswap.enabled=0 rw rootfstype=ext4
+
+
+# systemd-boot entries found in /boot/loader/entries/
+# --- 2026-01-25_23-23-25_linux.conf ---
+options root=PARTUUID=d4d74a52-6fb7-45d8-82b5-b6900a826f1f zswap.enabled=0 rw rootfstype=ext4

@@ -1,0 +1,3 @@
+elephant.service
+hyprpaper.service
+wireplumber.service

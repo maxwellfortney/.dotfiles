@@ -1,0 +1,15 @@
+bluetooth.service
+cloudflared.service
+getty@.service
+mullvad-daemon.service
+mullvad-early-boot-blocking.service
+NetworkManager-dispatcher.service
+NetworkManager.service
+NetworkManager-wait-online.service
+nvidia-hibernate.service
+nvidia-resume.service
+nvidia-suspend.service
+nvidia-suspend-then-hibernate.service
+sddm.service
+systemd-timesyncd.service
+tailscaled.service

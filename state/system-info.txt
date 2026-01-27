@@ -1,0 +1,22 @@
+# System Information
+# Generated: Tue Jan 27 01:06:54 AM EST 2026
+
+# Hostname
+HOSTNAME=archlinux
+
+# Timezone
+TIMEZONE=US/Eastern
+
+# Locale
+LANG=en_US.UTF-8
+# /etc/locale.conf:
+# LANG=en_US.UTF-8
+
+# User groups for maxwell
+GROUPS=maxwellwheel
+
+# Default shell
+SHELL=/usr/bin/bash
+
+# Boot loader
+BOOTLOADER=systemd-boot
