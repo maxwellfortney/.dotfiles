@@ -5,3 +5,9 @@
 
 [includeIf "gitdir:/home/maxwell/code/paella/"]
   path = ~/.gitconfig-paella
+
+[credential "https://github.com"]
+  helper = !/home/maxwell/.local/bin/git-credential-gh-multi
+
+[credential "https://gist.github.com"]
+  helper = !/home/maxwell/.local/bin/git-credential-gh-multi
