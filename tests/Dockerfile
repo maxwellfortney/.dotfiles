@@ -22,7 +22,10 @@ RUN useradd -m -G wheel -s /bin/bash testuser && \
 WORKDIR /home/testuser/.dotfiles
 
 # Copy dotfiles into container
-COPY --chown=testuser:testuser . .
+COPY . .
+
+# Remove .git directory and fix permissions
+RUN rm -rf .git && chown -R testuser:testuser .
 
 # Switch to test user
 USER testuser

@@ -2,6 +2,7 @@ bluetooth.service
 cloudflared.service
 docker.service
 getty@.service
+libvirtd.service
 mullvad-daemon.service
 mullvad-early-boot-blocking.service
 NetworkManager-dispatcher.service
@@ -14,3 +15,4 @@ nvidia-suspend-then-hibernate.service
 sddm.service
 systemd-timesyncd.service
 tailscaled.service
+virtlogd.service

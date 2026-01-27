@@ -1,5 +1,5 @@
 # System Information
-# Generated: Tue Jan 27 01:23:37 AM EST 2026
+# Generated: Tue Jan 27 03:43:33 AM EST 2026
 
 # Hostname
 HOSTNAME=archlinux
@@ -13,7 +13,7 @@ LANG=en_US.UTF-8
 # LANG=en_US.UTF-8
 
 # User groups for maxwell
-GROUPS=maxwellwheeldocker
+GROUPS=maxwellwheeldockerlibvirt
 
 # Default shell
 SHELL=/usr/bin/bash

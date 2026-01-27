@@ -9,10 +9,12 @@ cloudflared
 cuda
 dkms
 dmidecode
+dnsmasq
 docker
 docker-compose
 dolphin
 dunst
+edk2-ovmf
 efibootmgr
 eza
 fastfetch
@@ -31,6 +33,7 @@ iwd
 kitty
 libpulse
 libva-nvidia-driver
+libvirt
 linux
 linux-firmware
 linux-headers
@@ -44,6 +47,7 @@ pipewire-alsa
 pipewire-jack
 pipewire-pulse
 polkit-kde-agent
+qemu-desktop
 qt5-wayland
 qt6-wayland
 sddm
@@ -57,6 +61,7 @@ sunshine
 tailscale
 uwsm
 vim
+virt-manager
 waybar
 wget
 wireless_tools

@@ -1,0 +1,9 @@
+[Unit]
+Description=Weekly Arch Linux mirrorlist refresh
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

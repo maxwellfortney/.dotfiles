@@ -61,7 +61,8 @@ capture_pacman_packages() {
     # Cleanup
     rm -f /tmp/all-explicit.txt /tmp/repo-packages.txt
     
-    local count=$(wc -l < "$pacman_file" | tr -d ' ')
+    local count
+    count=$(wc -l < "$pacman_file" | tr -d ' ')
     success "Captured $count pacman packages -> packages-pacman.txt"
 }
 
@@ -73,14 +74,15 @@ capture_aur_packages() {
     
     local aur_file="$STATE_DIR/packages-aur.txt"
     
+    local count
     if command -v yay &> /dev/null; then
         # Get foreign packages (not in official repos) = AUR packages
         pacman -Qqem > "$aur_file" 2>/dev/null || echo "" > "$aur_file"
-        local count=$(wc -l < "$aur_file" | tr -d ' ')
+        count=$(wc -l < "$aur_file" | tr -d ' ')
         success "Captured $count AUR packages -> packages-aur.txt"
     elif command -v paru &> /dev/null; then
         pacman -Qqem > "$aur_file" 2>/dev/null || echo "" > "$aur_file"
-        local count=$(wc -l < "$aur_file" | tr -d ' ')
+        count=$(wc -l < "$aur_file" | tr -d ' ')
         success "Captured $count AUR packages -> packages-aur.txt"
     else
         warn "No AUR helper found (yay/paru), capturing foreign packages anyway"
@@ -101,7 +103,8 @@ capture_system_services() {
         awk '{print $1}' | \
         sort > "$services_file"
     
-    local count=$(wc -l < "$services_file" | tr -d ' ')
+    local count
+    count=$(wc -l < "$services_file" | tr -d ' ')
     success "Captured $count enabled system services -> services-enabled.txt"
 }
 
@@ -118,7 +121,8 @@ capture_user_services() {
         awk '{print $1}' | \
         sort > "$user_services_file"
     
-    local count=$(wc -l < "$user_services_file" | tr -d ' ')
+    local count
+    count=$(wc -l < "$user_services_file" | tr -d ' ')
     success "Captured $count enabled user services -> services-user.txt"
 }
 
@@ -236,11 +240,11 @@ capture_system_info() {
         echo ""
         
         echo "# User groups for $USER"
-        echo "GROUPS=$(groups $USER 2>/dev/null | cut -d: -f2 | tr -d ' ' | tr ' ' ',')"
+        echo "GROUPS=$(groups "$USER" 2>/dev/null | cut -d: -f2 | tr -d ' ' | tr ' ' ',')"
         echo ""
         
         echo "# Default shell"
-        echo "SHELL=$(getent passwd $USER | cut -d: -f7)"
+        echo "SHELL=$(getent passwd "$USER" | cut -d: -f7)"
         echo ""
         
         echo "# Boot loader"

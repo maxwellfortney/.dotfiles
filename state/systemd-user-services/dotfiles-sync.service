@@ -1,0 +1,18 @@
+[Unit]
+Description=Dotfiles state sync
+Documentation=https://github.com/your-username/dotfiles
+
+[Service]
+Type=oneshot
+ExecStart=/home/maxwell/.dotfiles/scripts/sync-state.sh
+WorkingDirectory=/home/maxwell/.dotfiles
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment=HOME=/home/maxwell
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# Uncomment to enable auto-push:
+# Environment=DOTFILES_AUTO_PUSH=true

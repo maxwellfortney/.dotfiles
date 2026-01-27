@@ -76,7 +76,8 @@ install_yay() {
     log "Installing yay (AUR helper)..."
     
     # Create temp directory
-    local tmpdir=$(mktemp -d)
+    local tmpdir
+    tmpdir=$(mktemp -d)
     cd "$tmpdir"
     
     # Clone yay

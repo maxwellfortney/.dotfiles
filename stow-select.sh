@@ -52,8 +52,8 @@ print_status() {
 # Function to check if stow is installed
 check_stow() {
     if ! command -v stow &> /dev/null; then
-        print_status $RED "Error: stow is not installed!"
-        print_status $YELLOW "Install it with: sudo pacman -S stow"
+        print_status "$RED" "Error: stow is not installed!"
+        print_status "$YELLOW" "Install it with: sudo pacman -S stow"
         exit 1
     fi
 }
@@ -61,13 +61,14 @@ check_stow() {
 # Function to remove conflicting files before stowing
 remove_conflicts() {
     local pkg="$1"
-    local backup_dir="$HOME/.config-backup/$(date +%Y%m%d-%H%M%S)"
+    local backup_dir
+    backup_dir="$HOME/.config-backup/$(date +%Y%m%d-%H%M%S)"
     local had_conflicts=false
     
     # Find all files in the package directory
     while IFS= read -r -d '' file; do
         # Get the relative path from the package directory
-        local rel_path="${file#$pkg/}"
+        local rel_path="${file#"$pkg"/}"
         local target="$HOME/$rel_path"
         
         # Check if target exists and is NOT a symlink
@@ -81,7 +82,7 @@ remove_conflicts() {
     done < <(find "$pkg" -type f -print0)
     
     if [ "$had_conflicts" = true ]; then
-        print_status $BLUE "Backed up conflicting files to $backup_dir"
+        print_status "$BLUE" "Backed up conflicting files to $backup_dir"
     fi
 }
 
@@ -97,21 +98,21 @@ stow_selected() {
     local selected=("$@")
     
     if [ ${#selected[@]} -eq 0 ]; then
-        print_status $YELLOW "No directories selected"
+        print_status "$YELLOW" "No directories selected"
         return
     fi
     
-    print_status $BLUE "Stowing selected directories..."
+    print_status "$BLUE" "Stowing selected directories..."
     if [ -n "$ADOPT_FLAG" ]; then
-        print_status $YELLOW "Using --adopt: existing files will be moved into the repo"
+        print_status "$YELLOW" "Using --adopt: existing files will be moved into the repo"
     fi
     if [ -n "$FORCE_FLAG" ]; then
-        print_status $YELLOW "Using --force: conflicting files will be backed up and removed"
+        print_status "$YELLOW" "Using --force: conflicting files will be backed up and removed"
     fi
     echo
     
     for dir in "${selected[@]}"; do
-        print_status $YELLOW "Stowing $dir..."
+        print_status "$YELLOW" "Stowing $dir..."
         
         # If force flag is set, remove conflicting files first
         if [ -n "$FORCE_FLAG" ]; then
@@ -119,19 +120,19 @@ stow_selected() {
         fi
         
         if stow $ADOPT_FLAG "$dir"; then
-            print_status $GREEN "✓ Successfully stowed $dir"
+            print_status "$GREEN" "✓ Successfully stowed $dir"
         else
-            print_status $RED "✗ Failed to stow $dir"
+            print_status "$RED" "✗ Failed to stow $dir"
         fi
     done
     
     echo
-    print_status $GREEN "Done!"
+    print_status "$GREEN" "Done!"
 }
 
 # Function using fzf (best option)
 use_fzf() {
-    print_status $BLUE "Select directories to stow (use Ctrl+A to select all, Tab to toggle, Enter to confirm):"
+    print_status "$BLUE" "Select directories to stow (use Ctrl+A to select all, Tab to toggle, Enter to confirm):"
     echo
     
     local selected
@@ -146,7 +147,7 @@ use_fzf() {
         
         stow_selected "${dirs[@]}"
     else
-        print_status $YELLOW "No directories selected"
+        print_status "$YELLOW" "No directories selected"
     fi
 }
 
@@ -158,7 +159,7 @@ use_whiptail() {
     done < <(get_git_dirs)
     
     if [ ${#dirs[@]} -eq 0 ]; then
-        print_status $RED "No directories found in git repository"
+        print_status "$RED" "No directories found in git repository"
         exit 1
     fi
     
@@ -169,9 +170,7 @@ use_whiptail() {
     done
     
     local selected
-    selected=$(whiptail --title "Select Directories to Stow" --checklist "Choose directories to stow:" 20 60 10 "${options[@]}" 3>&1 1>&2 2>&3)
-    
-    if [ $? -eq 0 ] && [ -n "$selected" ]; then
+    if selected=$(whiptail --title "Select Directories to Stow" --checklist "Choose directories to stow:" 20 60 10 "${options[@]}" 3>&1 1>&2 2>&3) && [ -n "$selected" ]; then
         # Parse selected indices
         local to_stow=()
         for index in $selected; do
@@ -183,7 +182,7 @@ use_whiptail() {
         
         stow_selected "${to_stow[@]}"
     else
-        print_status $YELLOW "No directories selected"
+        print_status "$YELLOW" "No directories selected"
     fi
 }
 
@@ -195,11 +194,11 @@ use_select() {
     done < <(get_git_dirs)
     
     if [ ${#dirs[@]} -eq 0 ]; then
-        print_status $RED "No directories found in git repository"
+        print_status "$RED" "No directories found in git repository"
         exit 1
     fi
     
-    print_status $BLUE "Select directories to stow (enter numbers separated by spaces, then press enter):"
+    print_status "$BLUE" "Select directories to stow (enter numbers separated by spaces, then press enter):"
     echo
     
     # Show numbered list
@@ -208,7 +207,7 @@ use_select() {
     done
     
     echo
-    read -p "Enter selection (e.g., 1 3 5): " selection
+    read -rp "Enter selection (e.g., 1 3 5): " selection
     
     if [ -n "$selection" ]; then
         local to_stow=()
@@ -221,7 +220,7 @@ use_select() {
         
         stow_selected "${to_stow[@]}"
     else
-        print_status $YELLOW "No directories selected"
+        print_status "$YELLOW" "No directories selected"
     fi
 }
 
@@ -229,7 +228,7 @@ use_select() {
 main() {
     # Change to dotfiles directory
     cd "$HOME/.dotfiles" || {
-        print_status $RED "Error: Could not change to ~/.dotfiles directory"
+        print_status "$RED" "Error: Could not change to ~/.dotfiles directory"
         exit 1
     }
     
@@ -237,13 +236,13 @@ main() {
     
     # Try to use the best available tool
     if command -v fzf &> /dev/null; then
-        print_status $GREEN "Using fzf (fuzzy finder)"
+        print_status "$GREEN" "Using fzf (fuzzy finder)"
         use_fzf
     elif command -v whiptail &> /dev/null; then
-        print_status $GREEN "Using whiptail"
+        print_status "$GREEN" "Using whiptail"
         use_whiptail
     else
-        print_status $YELLOW "Using basic selection (install fzf or whiptail for better experience)"
+        print_status "$YELLOW" "Using basic selection (install fzf or whiptail for better experience)"
         use_select
     fi
 }

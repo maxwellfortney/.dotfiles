@@ -5,7 +5,8 @@
 # Runs all tests for the disaster recovery scripts
 # Should be run inside the Docker container
 
-set -e
+# Don't use set -e - we want to continue on test failures
+# set -e
 
 # Colors
 RED='\033[0;31m'
@@ -32,14 +33,14 @@ log() {
 
 pass() {
     echo -e "${GREEN}[PASS]${NC} $1"
-    ((TESTS_PASSED++))
-    ((TESTS_RUN++))
+    ((TESTS_PASSED++)) || true
+    ((TESTS_RUN++)) || true
 }
 
 fail() {
     echo -e "${RED}[FAIL]${NC} $1"
-    ((TESTS_FAILED++))
-    ((TESTS_RUN++))
+    ((TESTS_FAILED++)) || true
+    ((TESTS_RUN++)) || true
 }
 
 section() {
@@ -204,12 +205,23 @@ test_sync_state() {
     log "Initializing git repo for sync test..."
     cd "$DOTFILES_DIR"
     
+    # Force remove any .git directory (may have permission issues from Docker)
+    # Try regular rm first, then sudo if needed
+    if [ -d ".git" ]; then
+        log "Removing existing .git directory..."
+        rm -rf .git 2>/dev/null || sudo rm -rf .git 2>/dev/null || true
+    fi
+    
+    # Initialize fresh git repo
     if ! git rev-parse --git-dir &>/dev/null; then
         git init
         git config user.email "test@test.com"
         git config user.name "Test User"
         git add -A
         git commit -m "Initial commit for testing"
+        pass "Git repo initialized for testing"
+    else
+        pass "Git repo already exists"
     fi
     
     log "Running sync-state.sh..."
@@ -238,10 +250,12 @@ test_idempotency() {
     
     # Run capture twice
     "$DOTFILES_DIR/scripts/capture-state.sh" > /dev/null 2>&1
-    local first_hash=$(md5sum "$DOTFILES_DIR/state/packages-pacman.txt" | cut -d' ' -f1)
+    local first_hash
+    first_hash=$(md5sum "$DOTFILES_DIR/state/packages-pacman.txt" | cut -d' ' -f1)
     
     "$DOTFILES_DIR/scripts/capture-state.sh" > /dev/null 2>&1
-    local second_hash=$(md5sum "$DOTFILES_DIR/state/packages-pacman.txt" | cut -d' ' -f1)
+    local second_hash
+    second_hash=$(md5sum "$DOTFILES_DIR/state/packages-pacman.txt" | cut -d' ' -f1)
     
     if [ "$first_hash" = "$second_hash" ]; then
         pass "capture-state.sh is idempotent (same output)"

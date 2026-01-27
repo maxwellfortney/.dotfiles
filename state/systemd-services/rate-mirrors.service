@@ -1,0 +1,9 @@
+[Unit]
+Description=Update Arch Linux mirrorlist using rate-mirrors
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rate-mirrors --protocol=https --allow-root arch
+StandardOutput=file:/etc/pacman.d/mirrorlist

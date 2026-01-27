@@ -27,7 +27,8 @@ log() {
 }
 
 log_stdout() {
-    local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    local msg
+    msg="[$(date '+%Y-%m-%d %H:%M:%S')] $1"
     echo "$msg"
     echo "$msg" >> "$LOG_FILE"
 }
@@ -69,11 +70,13 @@ sync_state() {
     fi
     
     # Generate commit message
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     local commit_msg="Auto-sync: Update system state ($timestamp)"
     
     # Count changes
-    local changes=$(git diff --cached --stat state/ | tail -1)
+    local changes
+    changes=$(git diff --cached --stat state/ | tail -1)
     log_stdout "Changes detected: $changes"
     
     # Commit changes

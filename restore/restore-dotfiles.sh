@@ -161,7 +161,7 @@ post_stow_actions() {
     
     # Ensure .local/bin is in PATH (for custom scripts)
     if [ -d "$HOME/.local/bin" ]; then
-        success "~/.local/bin directory exists"
+        success "\$HOME/.local/bin directory exists"
     fi
     
     # Set up font cache if fonts were stowed

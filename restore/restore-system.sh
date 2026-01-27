@@ -203,8 +203,6 @@ restore_system_info() {
     # Restore user groups
     if [ -n "$saved_groups" ]; then
         log "Checking user groups..."
-        local current_groups
-        current_groups=$(groups "$USER" 2>/dev/null | cut -d: -f2 | tr -d ' ')
         
         # Parse saved groups (comma-separated)
         IFS=',' read -ra group_array <<< "$saved_groups"

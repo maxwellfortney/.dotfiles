@@ -1,0 +1,13 @@
+[Unit]
+Description=Run dotfiles sync every 6 hours
+
+[Timer]
+# Run every 6 hours
+OnCalendar=*-*-* 00,06,12,18:00:00
+# Run shortly after boot if a scheduled run was missed
+Persistent=true
+# Random delay up to 5 minutes to avoid exact timing
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

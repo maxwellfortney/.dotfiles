@@ -166,8 +166,9 @@ run_restore() {
         step "$step_num" "Install Packages"
         if [ "$DRY_RUN" = true ]; then
             log "Would run: restore-packages.sh"
-            local pacman_count=$(wc -l < "$DOTFILES_DIR/state/packages-pacman.txt" 2>/dev/null || echo 0)
-            local aur_count=$(wc -l < "$DOTFILES_DIR/state/packages-aur.txt" 2>/dev/null || echo 0)
+            local pacman_count aur_count
+            pacman_count=$(wc -l < "$DOTFILES_DIR/state/packages-pacman.txt" 2>/dev/null || echo 0)
+            aur_count=$(wc -l < "$DOTFILES_DIR/state/packages-aur.txt" 2>/dev/null || echo 0)
             log "  - $pacman_count pacman packages"
             log "  - $aur_count AUR packages"
         else
@@ -184,8 +185,9 @@ run_restore() {
         step "$step_num" "Enable Services"
         if [ "$DRY_RUN" = true ]; then
             log "Would run: restore-services.sh"
-            local service_count=$(wc -l < "$DOTFILES_DIR/state/services-enabled.txt" 2>/dev/null || echo 0)
-            local user_service_count=$(wc -l < "$DOTFILES_DIR/state/services-user.txt" 2>/dev/null || echo 0)
+            local service_count user_service_count
+            service_count=$(wc -l < "$DOTFILES_DIR/state/services-enabled.txt" 2>/dev/null || echo 0)
+            user_service_count=$(wc -l < "$DOTFILES_DIR/state/services-user.txt" 2>/dev/null || echo 0)
             log "  - $service_count system services"
             log "  - $user_service_count user services"
         else
@@ -220,7 +222,8 @@ run_restore() {
         step "$step_num" "Stow Dotfiles"
         if [ "$DRY_RUN" = true ]; then
             log "Would run: restore-dotfiles.sh"
-            local pkg_count=$(find "$DOTFILES_DIR" -maxdepth 1 -type d ! -name '.' ! -name '.git' ! -name 'restore' ! -name 'scripts' ! -name 'state' ! -name 'logs' | wc -l)
+            local pkg_count
+            pkg_count=$(find "$DOTFILES_DIR" -maxdepth 1 -type d ! -name '.' ! -name '.git' ! -name 'restore' ! -name 'scripts' ! -name 'state' ! -name 'logs' | wc -l)
             log "  - $pkg_count stow packages"
         else
             "$SCRIPT_DIR/restore-dotfiles.sh"

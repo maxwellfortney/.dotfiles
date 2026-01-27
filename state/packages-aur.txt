@@ -1,5 +1,6 @@
 asdf-vm
 brave-bin
+bruno
 cursor-bin
 doppler-cli-bin
 elephant
