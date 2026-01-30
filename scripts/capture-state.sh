@@ -67,7 +67,6 @@ capture_pacman_repos() {
     
     {
         echo "# Custom pacman repositories"
-        echo "# Generated: $(date)"
         echo "# Add these to /etc/pacman.conf before installing packages"
         echo ""
     } > "$repos_file"
@@ -283,7 +282,6 @@ capture_system_info() {
     
     {
         echo "# System Information"
-        echo "# Generated: $(date)"
         echo ""
         
         echo "# Hostname"
