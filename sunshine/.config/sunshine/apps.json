@@ -1,0 +1,26 @@
+{
+    "apps": [
+        {
+            "name": "Desktop"
+        },
+        {
+            "auto-detach": true,
+            "exit-timeout": 5,
+            "name": "Headless",
+            "prep-cmd": [
+                {
+                    "do": "sh -c \"hyprctl keyword monitor HEADLESS-2,${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}@${SUNSHINE_CLIENT_FPS},auto,1\"",
+                    "undo": "hyprctl keyword monitor HEADLESS-2,disable"
+                },
+                {
+                    "do": "hyprctl keyword monitor HDMI-A-2,disable",
+                    "undo": "hyprctl reload"
+                }
+            ],
+            "wait-all": true
+        }
+    ],
+    "env": {
+        "PATH": "$(PATH):$(HOME)/.local/bin"
+    }
+}
