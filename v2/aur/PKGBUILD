@@ -1,0 +1,190 @@
+# Maintainer: Maxwell <your-email@example.com>
+pkgname=zera
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Beautiful Arch Linux + Hyprland desktop environment"
+arch=('any')
+url="https://github.com/maxwell/zera"
+license=('MIT')
+install=zera.install
+
+# Core dependencies - user selects optional packages via 'zera sync'
+depends=(
+    # Hyprland core
+    'hyprland'
+    'uwsm'  # Universal Wayland Session Manager
+    'xdg-desktop-portal-hyprland'
+    'polkit-kde-agent'
+    'qt5-wayland'
+    'qt6-wayland'
+    
+    # Display & Audio
+    'sddm'
+    'pipewire'
+    'pipewire-pulse'
+    'pipewire-alsa'
+    'pipewire-jack'
+    'gst-plugin-pipewire'
+    'wireplumber'
+    'libpulse'
+    
+    # Bluetooth
+    'bluez'
+    'bluez-utils'
+    'blueman'
+    
+    # Essential UI
+    'waybar'
+    'dunst'
+    'hyprpaper'
+    'hyprsunset'
+    
+    # Hyprland utils
+    'grim'
+    'slurp'
+    'hyprpicker'
+    'hyprshot'
+    
+    # Network
+    'networkmanager'
+    'network-manager-applet'
+    
+    # File manager
+    'dolphin'
+    
+    # Fonts
+    'otf-geist-mono-nerd'
+    'ttf-nerd-fonts-symbols'  # Icons for waybar etc
+    
+    # System utils
+    'git'
+    'fzf'
+    'fastfetch'
+    'xdg-utils'
+    'htop'
+    'less'
+    'wget'
+    'github-cli'
+    
+    # CLI tools (used by shell aliases)
+    'eza'      # Modern ls
+    'bat'      # Modern cat
+    'ripgrep'  # Modern grep (rg)
+    
+    # Mirror optimization
+    'reflector'
+)
+
+optdepends=(
+    # Terminals
+    'kitty: GPU-accelerated terminal (recommended)'
+    'alacritty: Minimal, fast terminal'
+    'ghostty: Modern terminal'
+    
+    # Shells
+    'fish: User-friendly shell (recommended)'
+    'zsh: Powerful traditional shell'
+    'starship: Cross-shell prompt'
+    
+    # Browsers
+    'brave-bin: Privacy-focused browser'
+    'zen-browser-bin: Beautiful Firefox-based browser'
+    'firefox: Mozilla Firefox'
+    
+    # Launchers
+    'wofi: Wayland launcher'
+    'walker-bin: Modern launcher (recommended)'
+    'elephant-bin: Backend service for Walker'
+    'elephant-desktopapplications-bin: Walker app launcher provider'
+    'elephant-calc-bin: Walker calculator provider'
+    'elephant-clipboard-bin: Walker clipboard provider'
+    'elephant-files-bin: Walker file browser provider'
+    'elephant-runner-bin: Walker command runner provider'
+    'elephant-symbols-bin: Walker symbols provider'
+    
+    # Audio control (AUR)
+    'pwvucontrol: Pipewire volume control GUI'
+    
+    # Fonts (AUR)
+    'ttf-apple-emoji: Apple color emoji'
+    'ttf-geist-mono: Geist Mono font'
+    
+    # Theming
+    'matugen: Dynamic color theming from wallpapers'
+    
+    # IDEs (AUR)
+    'cursor-bin: AI-powered code editor'
+    'visual-studio-code-bin: VS Code editor'
+    
+    # Development
+    'docker: Container runtime'
+    'docker-compose: Container orchestration'
+    'asdf-vm: Version manager for programming languages'
+    'bruno: API client'
+    
+    # Gaming
+    'steam: Gaming platform'
+    'gamemode: Game performance optimizer'
+    'lib32-gamemode: 32-bit gamemode support'
+    
+    # Media
+    'obs-studio: Streaming/recording'
+    'kdenlive: Video editor'
+    'sunshine: Game streaming server (from LizardByte repo)'
+    
+    # Communication (AUR)
+    'vesktop: Discord client (Vencord)'
+    'slack-desktop: Slack'
+    
+    # Networking/VPN
+    'cloudflared: Cloudflare tunnels'
+    'tailscale: Tailscale VPN'
+    'mullvad-vpn-bin: Mullvad VPN'
+)
+
+source=("$pkgname-$pkgver.tar.gz::https://github.com/maxwell/$pkgname/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')  # Update with actual hash for release
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    
+    # Install main command
+    install -Dm755 bin/zera "$pkgdir/usr/bin/zera"
+    
+    # Install library/share files
+    install -dm755 "$pkgdir/usr/share/zera"
+    
+    # Main installer script
+    install -Dm755 install.sh "$pkgdir/usr/share/zera/install.sh"
+    
+    # Copy install helper scripts
+    cp -r install "$pkgdir/usr/share/zera/"
+    
+    # Copy config (stow packages) - excluding zera-hooks
+    install -dm755 "$pkgdir/usr/share/zera/config"
+    for dir in config/*/; do
+        dirname=$(basename "$dir")
+        if [[ "$dirname" != "zera-hooks" ]]; then
+            cp -r "$dir" "$pkgdir/usr/share/zera/config/"
+        fi
+    done
+    
+    # Copy defaults (package lists)
+    cp -r defaults "$pkgdir/usr/share/zera/"
+    
+    # Copy docs
+    cp -r docs "$pkgdir/usr/share/zera/"
+    
+    # Install version file
+    install -Dm644 version "$pkgdir/usr/share/zera/version"
+    
+    # Install pacman hook for auto-sync on upgrade
+    install -Dm644 config/zera-hooks/etc/pacman.d/hooks/zera-sync.hook \
+        "$pkgdir/etc/pacman.d/hooks/zera-sync.hook"
+    
+    # Install license
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    
+    # Make install scripts executable
+    find "$pkgdir/usr/share/zera/install" -name "*.sh" -exec chmod 755 {} \;
+}

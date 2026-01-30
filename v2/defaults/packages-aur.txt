@@ -1,0 +1,17 @@
+# Zera AUR Packages
+# Packages that need to be installed from AUR
+
+# Theming
+matugen-bin
+
+# Walker launcher (alternative to wofi)
+walker
+
+# Browser
+brave-bin
+
+# Rate mirrors for faster pacman
+rate-mirrors-bin
+
+# Spicetify for Spotify theming
+# spicetify-cli

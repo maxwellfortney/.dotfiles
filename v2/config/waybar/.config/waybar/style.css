@@ -1,0 +1,17 @@
+/* Zera Waybar Styles
+ * Your customizations go here - they override zera.css defaults
+ * CSS cascade: later rules win, so your styles here take precedence
+ */
+
+@import "zera.css";
+
+/* Example overrides:
+ * 
+ * window#waybar {
+ *     padding: 0 50px;
+ * }
+ * 
+ * .modules-center {
+ *     background: rgba(0, 0, 0, 0.8);
+ * }
+ */

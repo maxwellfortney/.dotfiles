@@ -1,0 +1,28 @@
+# Zera Recommended Packages
+# Common tools beyond the minimal core
+
+# Better CLI tools
+bat
+eza
+htop
+
+# Shell utilities
+shellcheck
+
+# Version control
+github-cli
+
+# Fonts
+otf-geist-mono-nerd
+
+# System monitoring
+smartmontools
+dmidecode
+
+# DNS/Networking extras
+dnsmasq
+tailscale
+
+# Microcode (pick one based on CPU)
+# amd-ucode
+# intel-ucode

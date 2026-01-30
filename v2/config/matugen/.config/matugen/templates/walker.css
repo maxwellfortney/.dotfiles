@@ -1,0 +1,2 @@
+@define-color background {{colors.background.default.hex}}99;
+@define-color text {{colors.on_background.default.hex}};

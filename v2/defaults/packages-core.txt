@@ -1,0 +1,90 @@
+# Zera Core Packages
+# These are required for a minimal working Hyprland setup
+
+# Base system
+base
+base-devel
+linux
+linux-firmware
+linux-headers
+sudo
+
+# Boot
+efibootmgr
+
+# Hyprland and Wayland essentials
+hyprland
+xdg-desktop-portal-hyprland
+xdg-utils
+qt5-wayland
+qt6-wayland
+polkit-kde-agent
+
+# Display manager
+sddm
+uwsm
+
+# Audio (PipeWire)
+pipewire
+pipewire-alsa
+pipewire-jack
+pipewire-pulse
+wireplumber
+libpulse
+gst-plugin-pipewire
+
+# Networking
+networkmanager
+network-manager-applet
+iwd
+wireless_tools
+wpa_supplicant
+
+# Bluetooth
+bluez
+bluez-utils
+blueman
+
+# Terminal
+kitty
+
+# Shell
+fish
+starship
+
+# Core utilities
+git
+stow
+wget
+less
+nano
+vim
+
+# Notifications
+dunst
+
+# Bar
+waybar
+
+# Application launcher
+wofi
+
+# Wallpaper
+hyprpaper
+
+# Screenshots
+grim
+slurp
+hyprshot
+
+# Color picker
+hyprpicker
+
+# Night light
+hyprsunset
+
+# System info
+fastfetch
+
+# File manager
+dolphin

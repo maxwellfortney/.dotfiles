@@ -1,0 +1,55 @@
+# ╔════════════════════════════════════════════════════════════╗
+# ║  Zera Fish User Configuration                               ║
+# ║                                                             ║
+# ║  Copy this file to 50-user.fish (remove .example)          ║
+# ║  Files 50-89 are for your customizations                    ║
+# ║  They load AFTER zera defaults and override them            ║
+# ╚════════════════════════════════════════════════════════════╝
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Custom Aliases
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# alias vim="nvim"
+# alias cat="bat"
+# alias ls="eza --icons"
+# alias ll="eza -la --icons"
+# alias tree="eza --tree --icons"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Custom Environment Variables
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# set -gx EDITOR nvim
+# set -gx VISUAL $EDITOR
+# set -gx BROWSER brave
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Custom Path Additions
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# fish_add_path ~/.cargo/bin
+# fish_add_path ~/go/bin
+# fish_add_path ~/.local/share/gem/ruby/3.0.0/bin
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Custom Functions
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# function mkcd
+#     mkdir -p $argv[1] && cd $argv[1]
+# end
+
+# function weather
+#     curl "wttr.in/$argv[1]?format=3"
+# end
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Abbreviations (expand when typed)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# abbr -a gst "git status"
+# abbr -a gco "git checkout"
+# abbr -a gp "git push"
+# abbr -a gl "git pull"
+# abbr -a dc "docker compose"

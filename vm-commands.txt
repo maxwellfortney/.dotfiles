@@ -1,0 +1,38 @@
+#!/bin/bash
+# Full Zera AUR install test
+# Now includes: yay install, user groups, system services
+set -e
+
+# Install build deps
+sudo pacman -S --needed --noconfirm base-devel git
+
+# Copy AUR folder and build
+rm -rf ~/zera-build
+mkdir -p ~/zera-build
+cd ~/zera-build
+
+# Copy the real PKGBUILD and modify source to use local files
+cp /mnt/dotfiles/v2/aur/PKGBUILD .
+cp /mnt/dotfiles/v2/aur/zera.install . 2>/dev/null || true
+
+# Modify PKGBUILD to use local source
+sed -i 's|source=.*|source=()|' PKGBUILD
+sed -i 's|sha256sums=.*|sha256sums=()|' PKGBUILD
+sed -i 's|cd "\$srcdir/\$pkgname-\$pkgver"|cd /mnt/dotfiles/v2|' PKGBUILD
+
+# Build and install
+makepkg -sf --noconfirm
+sudo pacman -U --noconfirm zera-*.pkg.tar.zst
+
+# Run setup - now does full first-time configuration:
+# - Installs yay if needed
+# - Prompts for terminal/shell/browser/launcher/features
+# - Installs selected packages
+# - Adds user to groups (wheel, video, audio, input, storage)
+# - Enables SDDM, pipewire, NetworkManager, bluetooth
+# - Deploys configs
+zera sync
+
+echo ""
+echo "=== Setup complete! ==="
+echo "Reboot to start Hyprland: sudo reboot"

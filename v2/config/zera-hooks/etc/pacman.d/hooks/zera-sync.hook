@@ -1,0 +1,12 @@
+# Zera Pacman Hook
+# Notifies user to sync after zera package update
+
+[Trigger]
+Operation = Upgrade
+Type = Package
+Target = zera
+
+[Action]
+Description = Zera updated! Run 'zera sync' to apply config changes.
+When = PostTransaction
+Exec = /usr/bin/true

@@ -1,0 +1,37 @@
+post_install() {
+    echo ""
+    echo "══════════════════════════════════════════════════════════════"
+    echo "  Zera installed!"
+    echo "══════════════════════════════════════════════════════════════"
+    echo ""
+    
+    # Optimize mirrors first for faster package downloads
+    echo "  Optimizing mirrors for faster downloads..."
+    if command -v reflector &> /dev/null; then
+        cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup 2>/dev/null || true
+        reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist 2>/dev/null && \
+            echo "  ✓ Mirrors optimized" || \
+            echo "  ⚠ Mirror optimization skipped"
+        pacman -Sy --noconfirm &>/dev/null || true
+    fi
+    
+    echo ""
+    echo "  Run 'zera sync' to complete setup:"
+    echo "    - Choose your terminal, shell, browser"
+    echo "    - Install selected packages"
+    echo "    - Deploy configs to your home directory"
+    echo ""
+    echo "  After setup, reboot to start Hyprland."
+    echo ""
+}
+
+post_upgrade() {
+    echo ""
+    echo "══════════════════════════════════════════════════════════════"
+    echo "  Zera upgraded to version $1"
+    echo "══════════════════════════════════════════════════════════════"
+    echo ""
+    echo "  Your configs have been auto-synced via pacman hook."
+    echo "  Reload Hyprland (Super+Shift+R) to apply changes."
+    echo ""
+}

@@ -1,0 +1,1456 @@
+#!/bin/bash
+# -----------------------------------------------------
+# ZERA - Main Command
+# -----------------------------------------------------
+# Wrapper command for Zera desktop environment
+#
+# Usage:
+#   zera              # Run installer (interactive)
+#   zera install      # Run installer
+#   zera sync         # Re-stow and merge configs
+#   zera config       # Manage preferences
+#   zera status       # Show current status
+#   zera eject        # Eject a config for local customization
+
+set -euo pipefail
+
+# Zera installation directory
+ZERA_SHARE="${ZERA_SHARE:-/usr/share/zera}"
+ZERA_CONFIG="$ZERA_SHARE/config"
+ZERA_INSTALL="$ZERA_SHARE/install"
+ZERA_USER_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/zera"
+ZERA_SYNC_VERSION_FILE="$ZERA_USER_DIR/.last-sync-version"
+ZERA_BACKUP_DIR="$ZERA_USER_DIR/backups"
+
+# Source helper functions
+source "$ZERA_INSTALL/helpers/common.sh"
+source "$ZERA_INSTALL/helpers/config.sh"
+
+# Initialize user config on first run
+init_zera_config
+
+# -----------------------------------------------------
+# Version & Sync Tracking
+# -----------------------------------------------------
+
+get_package_version() {
+    cat "$ZERA_SHARE/version" 2>/dev/null || echo "unknown"
+}
+
+get_last_sync_version() {
+    cat "$ZERA_SYNC_VERSION_FILE" 2>/dev/null || echo ""
+}
+
+save_sync_version() {
+    ensure_dir "$ZERA_USER_DIR"
+    get_package_version > "$ZERA_SYNC_VERSION_FILE"
+}
+
+is_sync_needed() {
+    local pkg_ver=$(get_package_version)
+    local sync_ver=$(get_last_sync_version)
+    [[ "$pkg_ver" != "$sync_ver" ]]
+}
+
+check_sync_status() {
+    # Skip check for certain commands
+    local cmd="${1:-}"
+    case "$cmd" in
+        sync|install|backup|version|help|-h|--help|-v|--version)
+            return
+            ;;
+    esac
+    
+    if is_sync_needed; then
+        local pkg_ver=$(get_package_version)
+        local sync_ver=$(get_last_sync_version)
+        if [[ -z "$sync_ver" ]]; then
+            warn "Zera not yet synced. Run 'zera sync' to apply configs."
+        else
+            warn "Zera updated (v$sync_ver → v$pkg_ver). Run 'zera sync' to apply changes."
+        fi
+        echo ""
+    fi
+}
+
+# Show version
+show_version() {
+    local version
+    version=$(cat "$ZERA_SHARE/version" 2>/dev/null || echo "unknown")
+    echo "Zera v$version"
+}
+
+# Show help
+show_help() {
+    show_version
+    echo ""
+    echo "Usage: zera [command]"
+    echo ""
+    echo "Commands:"
+    echo "  install          Run the full installer (interactive)"
+    echo "  sync             Re-deploy and sync all configs"
+    echo "  status           Show installation status"
+    echo "  config           Show/edit preferences"
+    echo "  config KEY VAL   Set a preference"
+    echo "  backup           Create a backup of your configs"
+    echo "  backup list      List available backups"
+    echo "  backup restore   Restore from a backup"
+    echo "  backup export    Export configs as portable tarball"
+    echo "  eject PKG        Fully eject a config package"
+    echo "  eject PKG/FILE   Partially eject a single file"
+    echo "  theme IMG        Change theme using wallpaper"
+    echo "  diff PKG         Show upstream changes for ejected config"
+    echo "  version          Show version"
+    echo "  help             Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  zera                              # Run installer"
+    echo "  zera sync                         # Sync after pacman update"
+    echo "  zera backup                       # Create backup"
+    echo "  zera backup restore 20260130      # Restore backup"
+    echo "  zera config terminal alacritty    # Switch terminal"
+    echo "  zera eject hyprland/zera/keybinds # Eject just keybinds"
+    echo "  zera theme ~/wall.jpg             # Change color theme"
+}
+
+# Run the installer
+cmd_install() {
+    export ZERA_DIR="$ZERA_SHARE"
+    source "$ZERA_SHARE/install.sh" "$@"
+}
+
+# -----------------------------------------------------
+# First-Time Setup
+# -----------------------------------------------------
+
+is_setup_complete() {
+    # Check if setup has been completed (config.toml has setup_complete = true)
+    [[ -f "$ZERA_USER_DIR/config.toml" ]] && grep -q "setup_complete.*=.*true" "$ZERA_USER_DIR/config.toml" 2>/dev/null
+}
+
+# Optimize pacman mirrors for faster downloads
+optimize_mirrors() {
+    log "Finding fastest mirrors..."
+    
+    # Install reflector if not present (it's in official repos, no AUR needed)
+    if ! has_command reflector; then
+        log "Installing reflector..."
+        sudo pacman -S --needed --noconfirm reflector
+    fi
+    
+    if has_command reflector; then
+        log "Testing mirrors (this may take a minute)..."
+        
+        # Backup current mirrorlist
+        sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+        
+        # Run reflector - get fastest 10 mirrors, sorted by speed
+        sudo reflector --latest 20 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+        
+        # Refresh package databases
+        sudo pacman -Sy
+        
+        success "Mirrors optimized"
+    else
+        warn "reflector not available, using default mirrors"
+    fi
+}
+
+first_time_setup() {
+    echo ""
+    echo -e "${CYAN}${BOLD}Welcome to Zera!${NC}"
+    echo "Let's configure your desktop environment."
+    echo ""
+    
+    # Terminal selection
+    section "Terminal"
+    echo "Choose your terminal emulator:"
+    echo "  1) kitty (default, GPU-accelerated)"
+    echo "  2) alacritty (minimal, fast)"
+    echo "  3) ghostty (new, modern)"
+    echo ""
+    read -rp "Select [1-3, default=1]: " term_choice
+    
+    local terminal="kitty"
+    case "$term_choice" in
+        2) terminal="alacritty" ;;
+        3) terminal="ghostty" ;;
+    esac
+    set_preference "terminal" "$terminal"
+    
+    # Shell selection
+    section "Shell"
+    echo "Choose your shell:"
+    echo "  1) fish (default, user-friendly)"
+    echo "  2) zsh (powerful, traditional)"
+    echo "  3) bash (keep default)"
+    echo ""
+    read -rp "Select [1-3, default=1]: " shell_choice
+    
+    local shell="fish"
+    case "$shell_choice" in
+        2) shell="zsh" ;;
+        3) shell="bash" ;;
+    esac
+    set_preference "shell" "$shell"
+    
+    # Browser selection
+    section "Browser"
+    echo "Choose your browser:"
+    echo "  1) zen (default, Firefox-based, beautiful)"
+    echo "  2) brave (privacy-focused)"
+    echo "  3) firefox"
+    echo "  4) none (skip)"
+    echo ""
+    read -rp "Select [1-4, default=1]: " browser_choice
+    
+    local browser="zen-browser-bin"
+    case "$browser_choice" in
+        2) browser="brave-bin" ;;
+        3) browser="firefox" ;;
+        4) browser="" ;;
+    esac
+    [[ -n "$browser" ]] && set_preference "browser" "$browser"
+    
+    # Launcher selection
+    section "Launcher"
+    echo "Choose your application launcher:"
+    echo "  1) walker (default, modern, feature-rich)"
+    echo "  2) wofi (simple, lightweight)"
+    echo ""
+    read -rp "Select [1-2, default=1]: " launcher_choice
+    
+    local launcher="walker"
+    case "$launcher_choice" in
+        2) launcher="wofi" ;;
+    esac
+    set_preference "launcher" "$launcher"
+    
+    # IDE selection
+    section "IDE"
+    echo "Choose your code editor:"
+    echo "  1) cursor (default, AI-powered)"
+    echo "  2) vscode (classic)"
+    echo "  3) none (skip)"
+    echo ""
+    read -rp "Select [1-3, default=1]: " ide_choice
+    
+    local ide="cursor"
+    case "$ide_choice" in
+        2) ide="vscode" ;;
+        3) ide="" ;;
+    esac
+    [[ -n "$ide" ]] && set_preference "ide" "$ide"
+    
+    # Optional features - bundles + individual
+    section "Optional Features"
+    echo "Quick bundles:"
+    echo "  a) ALL         - Install everything below"
+    echo "  d) Developer   - docker, asdf"
+    echo "  g) Gaming      - steam, sunshine"
+    echo "  m) Media       - obs, kdenlive"
+    echo "  c) Comms       - discord, slack"
+    echo "  v) VPN         - tailscale, mullvad, cloudflared"
+    echo "  n) None        - Skip optional features"
+    echo ""
+    echo "Or pick individual (comma-separated numbers):"
+    echo "  1) fonts       2) docker      3) asdf"
+    echo "  4) steam       5) sunshine    6) obs"
+    echo "  7) kdenlive    8) discord     9) slack"
+    echo " 10) tailscale  11) mullvad    12) cloudflared"
+    echo ""
+    read -rp "Select [a/d/g/m/c/v/n or 1,2,4... or mix like d,5,c]: " feature_choice
+    
+    local features=""
+    
+    # Handle empty/none
+    if [[ -z "$feature_choice" || "$feature_choice" =~ ^[nN]$ ]]; then
+        features=""
+    else
+        # Parse each item (bundles or numbers)
+        for item in ${feature_choice//,/ }; do
+            case "$item" in
+                a|A|all)
+                    features+="fonts,docker,asdf,steam,sunshine,obs,kdenlive,discord,slack,tailscale,mullvad,cloudflared,"
+                    ;;
+                d|D|dev)
+                    features+="docker,asdf,"
+                    ;;
+                g|G|gaming)
+                    features+="steam,sunshine,"
+                    ;;
+                m|M|media)
+                    features+="obs,kdenlive,"
+                    ;;
+                c|C|comms)
+                    features+="discord,slack,"
+                    ;;
+                v|V|vpn)
+                    features+="tailscale,mullvad,cloudflared,"
+                    ;;
+                1) features+="fonts," ;;
+                2) features+="docker," ;;
+                3) features+="asdf," ;;
+                4) features+="steam," ;;
+                5) features+="sunshine," ;;
+                6) features+="obs," ;;
+                7) features+="kdenlive," ;;
+                8) features+="discord," ;;
+                9) features+="slack," ;;
+                10) features+="tailscale," ;;
+                11) features+="mullvad," ;;
+                12) features+="cloudflared," ;;
+            esac
+        done
+        features="${features%,}"  # Remove trailing comma
+    fi
+    [[ -n "$features" ]] && set_preference "features" "$features"
+    
+    # Install selected packages (mirrors already optimized in post_install)
+    section "Installing Packages"
+    install_selected_packages "$terminal" "$shell" "$browser" "$launcher" "$ide" "$features"
+    
+    # Mark setup as complete
+    set_preference "setup_complete" "true"
+    
+    echo ""
+    success "Setup complete! Continuing with config sync..."
+    echo ""
+}
+
+install_selected_packages() {
+    local terminal="$1"
+    local shell="$2"
+    local browser="$3"
+    local launcher="$4"
+    local ide="$5"
+    local features="$6"
+    
+    local packages=()
+    
+    # Essential AUR packages (always installed)
+    packages+=("pwvucontrol")  # Pipewire volume control
+    
+    # Terminal
+    case "$terminal" in
+        kitty) packages+=("kitty") ;;
+        alacritty) packages+=("alacritty") ;;
+        ghostty) packages+=("ghostty") ;;  # AUR
+    esac
+    
+    # Shell
+    case "$shell" in
+        fish) packages+=("fish" "starship") ;;
+        zsh) packages+=("zsh" "starship") ;;
+    esac
+    
+    # Browser
+    case "$browser" in
+        brave-bin) packages+=("brave-bin") ;;  # AUR
+        zen-browser-bin) packages+=("zen-browser-bin") ;;  # AUR
+        firefox) packages+=("firefox") ;;
+    esac
+    
+    # Launcher (handled separately to avoid conflicts)
+    case "$launcher" in
+        wofi) packages+=("wofi") ;;
+        # walker handled separately below
+    esac
+    
+    # IDE
+    case "$ide" in
+        cursor) packages+=("cursor-bin") ;;  # AUR
+        vscode) packages+=("visual-studio-code-bin") ;;  # AUR
+    esac
+    
+    # Features - Development
+    if [[ "$features" == *"docker"* ]]; then
+        packages+=("docker" "docker-compose")
+    fi
+    
+    # Features - Gaming
+    if [[ "$features" == *"steam"* ]]; then
+        packages+=("steam" "gamemode" "lib32-gamemode")
+    fi
+    
+    # Features - Streaming/Media
+    if [[ "$features" == *"obs"* ]]; then
+        packages+=("obs-studio")
+    fi
+    if [[ "$features" == *"kdenlive"* ]]; then
+        packages+=("kdenlive")
+    fi
+    # Sunshine handled separately (needs LizardByte repo)
+    
+    # Features - Fonts
+    if [[ "$features" == *"fonts"* ]]; then
+        packages+=("ttf-apple-emoji" "ttf-geist-mono")
+    fi
+    
+    # Features - Development
+    if [[ "$features" == *"asdf"* ]]; then
+        packages+=("asdf-vm")
+    fi
+    
+    # Features - Communication
+    if [[ "$features" == *"discord"* ]]; then
+        packages+=("vesktop")
+    fi
+    if [[ "$features" == *"slack"* ]]; then
+        packages+=("slack-desktop")
+    fi
+    
+    # Features - Networking
+    if [[ "$features" == *"cloudflared"* ]]; then
+        packages+=("cloudflared")
+    fi
+    if [[ "$features" == *"tailscale"* ]]; then
+        packages+=("tailscale")
+    fi
+    if [[ "$features" == *"mullvad"* ]]; then
+        packages+=("mullvad-vpn-bin")
+    fi
+    
+    # Ensure yay is installed (needed for AUR packages)
+    if ! has_command yay && ! has_command paru; then
+        log "Installing yay (AUR helper)..."
+        local tmp_dir=$(mktemp -d)
+        git clone https://aur.archlinux.org/yay-bin.git "$tmp_dir/yay-bin"
+        (cd "$tmp_dir/yay-bin" && makepkg -si --noconfirm)
+        rm -rf "$tmp_dir"
+        success "yay installed"
+    fi
+    
+    if [[ ${#packages[@]} -gt 0 ]]; then
+        log "Installing: ${packages[*]}"
+        
+        # Separate pacman and AUR packages
+        local pacman_pkgs=()
+        local aur_pkgs=()
+    
+    for pkg in "${packages[@]}"; do
+        if pacman -Si "$pkg" &>/dev/null; then
+            pacman_pkgs+=("$pkg")
+        else
+            aur_pkgs+=("$pkg")
+        fi
+    done
+    
+    # Install pacman packages
+    if [[ ${#pacman_pkgs[@]} -gt 0 ]]; then
+        log "Installing from pacman: ${pacman_pkgs[*]}"
+        sudo pacman -S --needed --noconfirm "${pacman_pkgs[@]}" || warn "Some pacman packages failed"
+    fi
+    
+    # Install AUR packages
+    if [[ ${#aur_pkgs[@]} -gt 0 ]]; then
+        if has_command yay; then
+            log "Installing from AUR: ${aur_pkgs[*]}"
+            yay -S --needed --noconfirm --pgpfetch "${aur_pkgs[@]}" || warn "Some AUR packages failed"
+        elif has_command paru; then
+            log "Installing from AUR: ${aur_pkgs[*]}"
+            paru -S --needed --noconfirm "${aur_pkgs[@]}" || warn "Some AUR packages failed"
+        else
+            warn "No AUR helper found. Install manually: ${aur_pkgs[*]}"
+        fi
+    fi
+    fi  # end if packages
+    
+    # Enable services for features
+    if [[ "$features" == *"docker"* ]] && has_command docker; then
+        log "Enabling Docker..."
+        sudo systemctl enable docker
+        sudo usermod -aG docker "$USER" 2>/dev/null || true
+    fi
+    
+    if [[ "$features" == *"tailscale"* ]] && has_command tailscale; then
+        log "Enabling Tailscale..."
+        sudo systemctl enable --now tailscaled
+    fi
+    
+    if [[ "$features" == *"cloudflared"* ]] && has_command cloudflared; then
+        log "Cloudflared installed (configure tunnel manually)"
+    fi
+    
+    if [[ "$features" == *"sunshine"* ]] && has_command sunshine; then
+        log "Enabling Sunshine..."
+        systemctl --user enable sunshine
+    fi
+    
+    # Change shell if not current
+    if [[ "$shell" != "bash" ]]; then
+        local shell_path=$(which "$shell" 2>/dev/null)
+        if [[ -n "$shell_path" ]]; then
+            log "Setting default shell to $shell..."
+            sudo chsh -s "$shell_path" "$USER" 2>/dev/null || warn "Failed to change shell"
+        fi
+    fi
+    
+    # Install Walker separately to avoid package conflicts
+    if [[ "$launcher" == "walker" ]]; then
+        log "Installing Walker + Elephant..."
+        
+        # Use -bin packages for faster installation
+        local elephant_pkgs="elephant-bin elephant-desktopapplications-bin elephant-calc-bin elephant-clipboard-bin elephant-files-bin elephant-runner-bin elephant-symbols-bin walker-bin"
+        
+        if has_command yay; then
+            yay -S --needed --noconfirm --pgpfetch $elephant_pkgs || warn "Some walker/elephant packages failed"
+        elif has_command paru; then
+            paru -S --needed --noconfirm $elephant_pkgs || warn "Some walker/elephant packages failed"
+        else
+            warn "No AUR helper found. Install manually: $elephant_pkgs"
+        fi
+    fi
+    
+    # Enable elephant service for walker
+    if [[ "$launcher" == "walker" ]] && has_command elephant; then
+        log "Enabling Elephant service..."
+        
+        # Elephant has built-in service management
+        if elephant service enable 2>/dev/null; then
+            success "Elephant service enabled"
+        else
+            info "Elephant service will start after first login"
+        fi
+    fi
+    
+    # Install Sunshine from LizardByte repo (official, not AUR)
+    if [[ "$features" == *"sunshine"* ]]; then
+        log "Setting up LizardByte repository for Sunshine..."
+        
+        # Add LizardByte repo if not present
+        if ! grep -q "\[lizardbyte\]" /etc/pacman.conf 2>/dev/null; then
+            sudo tee -a /etc/pacman.conf > /dev/null << 'EOF'
+
+[lizardbyte]
+SigLevel = Optional
+Server = https://github.com/LizardByte/pacman-repo/releases/latest/download
+EOF
+            sudo pacman -Sy
+        fi
+        
+        log "Installing Sunshine..."
+        sudo pacman -S --needed --noconfirm lizardbyte/sunshine
+        success "Sunshine installed from LizardByte repo"
+    fi
+    
+    # Configure user groups (for hardware access)
+    section "User Groups"
+    
+    local groups_to_add=(wheel video audio input storage optical)
+    for group in "${groups_to_add[@]}"; do
+        if getent group "$group" &>/dev/null; then
+            if ! groups "$USER" 2>/dev/null | grep -qw "$group"; then
+                log "Adding $USER to group: $group"
+                sudo usermod -aG "$group" "$USER" 2>/dev/null || warn "Failed to add to $group"
+            fi
+        fi
+    done
+    success "User groups configured"
+    
+    # Enable system services (requires sudo)
+    section "Enabling System Services"
+    
+    # SDDM (display manager)
+    if has_command sddm; then
+        log "Enabling SDDM display manager..."
+        if sudo systemctl enable sddm 2>/dev/null; then
+            success "SDDM enabled"
+        else
+            warn "Failed to enable SDDM - enable manually: sudo systemctl enable sddm"
+        fi
+    fi
+    
+    # Audio (pipewire user services)
+    log "Enabling audio services..."
+    systemctl --user enable pipewire pipewire-pulse wireplumber 2>/dev/null || true
+    
+    # Network
+    if ! systemctl is-enabled NetworkManager &>/dev/null; then
+        log "Enabling NetworkManager..."
+        sudo systemctl enable NetworkManager 2>/dev/null || true
+    fi
+    
+    # Bluetooth (optional)
+    if has_command bluetoothctl; then
+        log "Enabling Bluetooth..."
+        sudo systemctl enable bluetooth 2>/dev/null || true
+    fi
+    
+    success "Packages installed"
+}
+
+# Sync configs (stow + merge)
+cmd_sync() {
+    local quiet=false
+    local post_upgrade=false
+    
+    # Parse flags
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --quiet|-q)
+                quiet=true
+                shift
+                ;;
+            --post-upgrade)
+                post_upgrade=true
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # For post-upgrade hook, send notification instead of console output
+    if [[ "$post_upgrade" == true ]]; then
+        # Run sync quietly, notify on completion
+        sync_configs_quiet
+        
+        if has_command notify-send; then
+            notify-send -i system-software-update "Zera Synced" \
+                "Configs updated to v$(get_package_version). Reload apps to apply."
+        fi
+        
+        save_sync_version
+        return
+    fi
+    
+    if [[ "$quiet" == true ]]; then
+        sync_configs_quiet
+        save_sync_version
+        return
+    fi
+    
+    # First-run detection: if no config exists, run setup first
+    if ! is_setup_complete; then
+        first_time_setup
+    fi
+    
+    # Normal verbose sync
+    log "Syncing Zera configs..."
+    
+    section "Deploying Configs"
+    
+    local count=0
+    deploy_configs verbose
+    count=$?
+    
+    section "Merging Configs"
+    
+    section "Post-Sync"
+    
+    # Update font cache if fonts present
+    if [[ -d "$HOME/.local/share/fonts" ]]; then
+        log "Updating font cache..."
+        fc-cache -f 2>/dev/null || true
+        success "Font cache updated"
+    fi
+    
+    # Save sync version
+    save_sync_version
+    success "Sync version saved: $(get_package_version)"
+    
+    echo ""
+    success "Sync complete!"
+    echo ""
+    info "Config types:"
+    echo "  • Sourceable (hyprland, fish): Add files to ~/.config/APP/user/"
+    echo "  • Mergeable (waybar, walker): Edit ~/.config/APP/user.* files"
+    echo ""
+    info "Run 'hyprctl reload' or restart apps to apply changes"
+}
+
+# Quiet sync (for hooks and scripts)
+sync_configs_quiet() {
+    deploy_configs quiet
+    fc-cache -f 2>/dev/null || true
+}
+
+# -----------------------------------------------------
+# Config Deployment (replaces stow)
+# -----------------------------------------------------
+
+# Deploy configs by creating symlinks from $HOME to $ZERA_CONFIG
+# Usage: deploy_configs [verbose|quiet]
+deploy_configs() {
+    local mode="${1:-verbose}"
+    local count=0
+    
+    # Iterate through each stow-style package in config/
+    for pkg_dir in "$ZERA_CONFIG"/*/; do
+        local pkg_name=$(basename "$pkg_dir")
+        [[ "$pkg_name" == "zera-hooks" ]] && continue
+        
+        # Find the actual config paths inside the package
+        # Structure: config/hyprland/.config/hypr/ -> ~/.config/hypr/
+        deploy_package "$pkg_dir" "$mode" && ((count++)) || true
+    done
+    
+    [[ "$mode" == "verbose" ]] && success "Deployed $count config packages"
+    return $count
+}
+
+# Apps that use include/import (symlink base files, copy entry points)
+INCLUDEABLE_APPS="waybar"
+
+# Apps where we just copy the config (user edits directly)
+# Fish needs writable dirs (completions/, functions/, fish_variables)
+COPYABLE_APPS="walker fish"
+
+# Deploy a single package
+deploy_package() {
+    local pkg_dir="$1"
+    local mode="${2:-verbose}"
+    local pkg_name=$(basename "$pkg_dir")
+    
+    [[ "$mode" == "verbose" ]] && log "Deploying $pkg_name..."
+    
+    # Handle .config directories
+    if [[ -d "$pkg_dir/.config" ]]; then
+        for app_dir in "$pkg_dir/.config"/*/; do
+            [[ ! -d "$app_dir" ]] && continue
+            local app_name=$(basename "$app_dir")
+            local target="$HOME/.config/$app_name"
+            
+            # Check app type and deploy accordingly
+            if [[ " $INCLUDEABLE_APPS " == *" $app_name "* ]]; then
+                deploy_includeable "$app_dir" "$target" "$mode"
+            elif [[ " $COPYABLE_APPS " == *" $app_name "* ]]; then
+                deploy_copyable "$app_dir" "$target" "$mode"
+            else
+                deploy_link "$app_dir" "$target" "$mode"
+            fi
+        done
+    fi
+    
+    # Handle .local/share directories (fonts, applications, etc)
+    if [[ -d "$pkg_dir/.local/share" ]]; then
+        for share_dir in "$pkg_dir/.local/share"/*/; do
+            [[ ! -d "$share_dir" ]] && continue
+            local share_name=$(basename "$share_dir")
+            local target="$HOME/.local/share/$share_name"
+            
+            deploy_link "$share_dir" "$target" "$mode"
+        done
+    fi
+    
+    # Handle .local/bin (user scripts)
+    if [[ -d "$pkg_dir/.local/bin" ]]; then
+        mkdir -p "$HOME/.local/bin"
+        for script in "$pkg_dir/.local/bin"/*; do
+            [[ ! -f "$script" ]] && continue
+            local script_name=$(basename "$script")
+            local target="$HOME/.local/bin/$script_name"
+            
+            # Symlink individual scripts (not the whole dir)
+            if [[ -L "$target" ]]; then
+                rm -f "$target"
+            fi
+            ln -sf "$script" "$target"
+            [[ "$mode" == "verbose" ]] && log "  Linked script: $script_name"
+        done
+    fi
+    
+    # Handle dotfiles in home (like .gitconfig, .bashrc)
+    for dotfile in "$pkg_dir"/.[!.]*; do
+        [[ ! -e "$dotfile" ]] && continue
+        [[ "$(basename "$dotfile")" == ".config" ]] && continue
+        [[ "$(basename "$dotfile")" == ".local" ]] && continue
+        
+        local filename=$(basename "$dotfile")
+        local target="$HOME/$filename"
+        
+        deploy_link "$dotfile" "$target" "$mode"
+    done
+    
+    # Handle bin directory
+    if [[ -d "$pkg_dir/bin" ]]; then
+        ensure_dir "$HOME/bin"
+        for bin_file in "$pkg_dir/bin"/*; do
+            [[ ! -f "$bin_file" ]] && continue
+            local bin_name=$(basename "$bin_file")
+            local target="$HOME/bin/$bin_name"
+            
+            deploy_link "$bin_file" "$target" "$mode"
+        done
+    fi
+    
+    [[ "$mode" == "verbose" ]] && success "Deployed: $pkg_name"
+    return 0
+}
+
+# Deploy an includeable app (waybar, walker) - symlink base files, copy entry points
+# These apps use include/import directives, so we:
+# - Symlink zera.* base files (read-only, from package)
+# - Copy config.*/style.* entry points (user edits these)
+deploy_includeable() {
+    local source_dir="$1"
+    local target_dir="$2"
+    local mode="${3:-verbose}"
+    local app_name=$(basename "$target_dir")
+    
+    # Create the target directory (not a symlink)
+    ensure_dir "$target_dir"
+    
+    # Symlink zera.* base files (these are the includeable bases)
+    for base_file in "$source_dir"/zera.*; do
+        [[ ! -f "$base_file" ]] && continue
+        local filename=$(basename "$base_file")
+        deploy_link "$base_file" "$target_dir/$filename" "$mode"
+    done
+    
+    # Copy user entry point files (config.*, style.*) if they don't exist
+    # These are the files users edit - they include/import the zera.* bases
+    for entry_file in "$source_dir"/config.* "$source_dir"/style.*; do
+        [[ ! -f "$entry_file" ]] && continue
+        local filename=$(basename "$entry_file")
+        local target_file="$target_dir/$filename"
+        
+        if [[ ! -f "$target_file" ]]; then
+            cp "$entry_file" "$target_file"
+            [[ "$mode" == "verbose" ]] && info "  Created: $filename"
+        fi
+    done
+    
+    # Handle subdirectories (like scripts/) - symlink them
+    for subdir in "$source_dir"/*/; do
+        [[ ! -d "$subdir" ]] && continue
+        local dirname=$(basename "$subdir")
+        deploy_link "$subdir" "$target_dir/$dirname" "$mode"
+    done
+}
+
+# Deploy a copyable app (walker) - copy files on first install
+# User edits the copy directly; use 'zera diff' to see upstream changes
+deploy_copyable() {
+    local source_dir="$1"
+    local target_dir="$2"
+    local mode="${3:-verbose}"
+    
+    if [[ -d "$target_dir" ]]; then
+        [[ "$mode" == "verbose" ]] && info "  Already exists: $target_dir (skipped)"
+        return 0
+    fi
+    
+    cp -r "$source_dir" "$target_dir"
+    [[ "$mode" == "verbose" ]] && info "  Copied: $target_dir (user-editable)"
+}
+
+# Create a symlink, handling existing files
+deploy_link() {
+    local source="$1"
+    local target="$2"
+    local mode="${3:-verbose}"
+    
+    # Ensure parent directory exists
+    ensure_dir "$(dirname "$target")"
+    
+    # Handle existing symlinks first (before -e check, as -e follows symlinks)
+    if [[ -L "$target" ]]; then
+        local current=$(readlink "$target" 2>/dev/null || echo "")
+        local wanted="$source"
+        
+        # Check if already pointing to the right place
+        if [[ "$current" == "$wanted" ]] || [[ "$(readlink -f "$target" 2>/dev/null)" == "$(readlink -f "$source" 2>/dev/null)" ]]; then
+            return 0  # Already correct
+        fi
+        
+        # Wrong symlink - just remove it (no need to backup symlinks)
+        rm -f "$target"
+    elif [[ -e "$target" ]]; then
+        # Existing real file/directory - back it up
+        local backup="${target}.zera-backup.$(date +%Y%m%d%H%M%S)"
+        [[ "$mode" == "verbose" ]] && warn "Backing up existing: $target"
+        mv "$target" "$backup" || {
+            warn "Could not backup $target, removing instead"
+            rm -rf "$target"
+        }
+    fi
+    
+    # Create the symlink (force to handle any edge cases)
+    ln -sf "$source" "$target"
+}
+
+
+# Show status
+cmd_status() {
+    show_version
+    echo ""
+    
+    section "Sync Status"
+    
+    local pkg_ver=$(get_package_version)
+    local sync_ver=$(get_last_sync_version)
+    
+    echo "  Package version: $pkg_ver"
+    echo "  Last synced:     ${sync_ver:-never}"
+    
+    if [[ -z "$sync_ver" ]]; then
+        warn "Never synced! Run 'zera sync' to apply configs."
+    elif [[ "$pkg_ver" != "$sync_ver" ]]; then
+        warn "Out of sync! Run 'zera sync' to apply updates."
+    else
+        success "Configs are up to date"
+    fi
+    
+    section "Preferences"
+    
+    echo "  Terminal: $(get_preference 'terminal' 'kitty')"
+    echo "  Shell:    $(get_preference 'shell' 'fish')"
+    echo "  Launcher: $(get_preference 'launcher' 'wofi')"
+    echo "  Browser:  $(get_preference 'browser' 'brave')"
+    
+    section "Stow Status"
+    
+    local stowed=0
+    local not_stowed=0
+    
+    for dir in "$ZERA_CONFIG"/*/; do
+        dir="${dir%/}"
+        local pkg_name=$(basename "$dir")
+        [[ "$pkg_name" == "zera-hooks" ]] && continue
+        
+        local test_file=$(find "$dir" -type f 2>/dev/null | head -1)
+        if [[ -n "$test_file" ]]; then
+            local relative="${test_file#$dir/}"
+            local home_file="$HOME/$relative"
+            
+            if [[ -L "$home_file" ]]; then
+                success "$pkg_name: stowed"
+                ((stowed++)) || true
+            else
+                warn "$pkg_name: not stowed or ejected"
+                ((not_stowed++)) || true
+            fi
+        fi
+    done
+    
+    echo ""
+    info "$stowed packages stowed, $not_stowed not stowed"
+    
+    section "Services"
+    
+    for svc in sddm NetworkManager bluetooth pipewire; do
+        if systemctl is-active "$svc" &>/dev/null; then
+            success "$svc: running"
+        elif systemctl is-enabled "$svc" &>/dev/null; then
+            warn "$svc: enabled but not running"
+        else
+            info "$svc: not enabled"
+        fi
+    done
+    
+    section "Config File"
+    
+    if [[ -f "$ZERA_CONFIG_FILE" ]]; then
+        success "Config: $ZERA_CONFIG_FILE"
+    else
+        warn "Config not initialized. Run 'zera config' to create."
+    fi
+}
+
+# Manage config
+cmd_config() {
+    local key="${1:-}"
+    local value="${2:-}"
+    
+    if [[ -z "$key" ]]; then
+        # Show current config
+        section "Zera Configuration"
+        
+        if [[ -f "$ZERA_CONFIG_FILE" ]]; then
+            cat "$ZERA_CONFIG_FILE"
+        else
+            warn "No config file found"
+            log "Creating default config..."
+            init_zera_config
+            cat "$ZERA_CONFIG_FILE"
+        fi
+        
+        echo ""
+        info "Edit with: zera config --edit"
+        info "Set value: zera config terminal alacritty"
+        return
+    fi
+    
+    if [[ "$key" == "--edit" || "$key" == "-e" ]]; then
+        ${EDITOR:-nano} "$ZERA_CONFIG_FILE"
+        return
+    fi
+    
+    if [[ -z "$value" ]]; then
+        # Get single value
+        local current
+        current=$(get_preference "$key" "")
+        if [[ -n "$current" ]]; then
+            echo "$current"
+        else
+            error "Unknown preference: $key"
+            exit 1
+        fi
+        return
+    fi
+    
+    # Set value
+    set_preference "$key" "$value"
+    success "Set $key = $value"
+    
+    # Handle terminal/shell changes
+    case "$key" in
+        terminal)
+            log "Installing $value if needed..."
+            install_if_missing "$value"
+            ;;
+        shell)
+            log "Installing $value if needed..."
+            install_if_missing "$value"
+            info "Run 'chsh -s /usr/bin/$value' to change default shell"
+            ;;
+    esac
+}
+
+# Eject config (full or partial)
+cmd_eject() {
+    local target="$1"
+    
+    if [[ -z "$target" ]]; then
+        error "Usage: zera eject <package> or zera eject <package/path/to/file>"
+        echo ""
+        echo "Full eject (entire package):"
+        echo "  zera eject hyprland"
+        echo ""
+        echo "Partial eject (single file):"
+        echo "  zera eject hyprland/zera/keybinds.conf"
+        echo ""
+        echo "Available packages:"
+        ls -1 "$ZERA_CONFIG"
+        exit 1
+    fi
+    
+    if [[ "$target" == */* ]]; then
+        # Partial eject (specific file)
+        cmd_eject_file "$target"
+    else
+        # Full eject (entire package)
+        cmd_eject_package "$target"
+    fi
+}
+
+cmd_eject_package() {
+    local pkg="$1"
+    local pkg_dir="$ZERA_CONFIG/$pkg"
+    
+    if [[ ! -d "$pkg_dir" ]]; then
+        error "Package not found: $pkg"
+        exit 1
+    fi
+    
+    section "Ejecting $pkg (Full)"
+    
+    warn "This will:"
+    echo "  1. Unstow $pkg (remove ALL symlinks)"
+    echo "  2. Copy ALL config files to your home directory"
+    echo "  3. Future zera updates won't affect this package"
+    echo ""
+    warn "Consider partial eject instead: zera eject $pkg/<file>"
+    echo ""
+    
+    if ! confirm "Proceed with FULL eject?"; then
+        echo "Cancelled."
+        exit 0
+    fi
+    
+    cd "$ZERA_CONFIG"
+    stow --target="$HOME" -D "$pkg" 2>/dev/null || true
+    
+    log "Copying files..."
+    cp -r "$pkg_dir"/. "$HOME/" 2>/dev/null || true
+    
+    add_ejected "$pkg" "$(cat "$ZERA_SHARE/version")"
+    
+    success "Ejected $pkg"
+    info "Config files are now local copies"
+}
+
+cmd_eject_file() {
+    local target="$1"
+    local pkg="${target%%/*}"
+    local file_path="${target#*/}"
+    
+    local src_file="$ZERA_CONFIG/$pkg/.config/$file_path"
+    local dest_file="$HOME/.config/$file_path"
+    
+    # Try alternate path structures
+    if [[ ! -f "$src_file" ]]; then
+        src_file="$ZERA_CONFIG/$target"
+    fi
+    
+    if [[ ! -f "$src_file" ]]; then
+        error "File not found: $target"
+        echo "Tried: $src_file"
+        exit 1
+    fi
+    
+    section "Ejecting $target (Partial)"
+    
+    log "This will:"
+    echo "  1. Remove symlink for this file"
+    echo "  2. Copy the file to a local version"
+    echo "  3. This file won't be updated by zera"
+    echo ""
+    
+    if ! confirm "Proceed?"; then
+        echo "Cancelled."
+        exit 0
+    fi
+    
+    # Remove symlink if exists
+    if [[ -L "$dest_file" ]]; then
+        rm "$dest_file"
+    fi
+    
+    # Copy file
+    mkdir -p "$(dirname "$dest_file")"
+    cp "$src_file" "$dest_file"
+    
+    add_ejected "$target" "$(cat "$ZERA_SHARE/version")"
+    
+    success "Ejected: $file_path"
+    info "This file is now a local copy at: $dest_file"
+    info "Other files in $pkg are still managed by zera"
+}
+
+# Change theme
+cmd_theme() {
+    local wallpaper="${1:-}"
+    
+    if [[ -z "$wallpaper" ]]; then
+        error "Usage: zera theme <wallpaper-path>"
+        echo ""
+        echo "Available wallpapers:"
+        find ~/.config/wallpapers -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) 2>/dev/null || echo "  No wallpapers found in ~/.config/wallpapers/"
+        exit 1
+    fi
+    
+    if [[ ! -f "$wallpaper" ]]; then
+        if [[ -f "$HOME/.config/wallpapers/$wallpaper" ]]; then
+            wallpaper="$HOME/.config/wallpapers/$wallpaper"
+        else
+            error "Wallpaper not found: $wallpaper"
+            exit 1
+        fi
+    fi
+    
+    if ! has_command matugen; then
+        error "matugen not installed"
+        echo "Install it: yay -S matugen-bin"
+        exit 1
+    fi
+    
+    log "Generating theme from: $(basename "$wallpaper")"
+    
+    if matugen image "$wallpaper"; then
+        success "Theme applied!"
+        info "Restart applications or run 'hyprctl reload' to see changes"
+    else
+        error "Theme generation failed"
+        exit 1
+    fi
+}
+
+# Show diff for ejected config
+cmd_diff() {
+    local target="${1:-}"
+    
+    if [[ -z "$target" ]]; then
+        error "Usage: zera diff <package> or zera diff <package/file>"
+        exit 1
+    fi
+    
+    warn "Diff feature coming soon!"
+    info "This will show changes between your ejected config and upstream"
+}
+
+# -----------------------------------------------------
+# Backup & Restore
+# -----------------------------------------------------
+
+# Files/directories to backup (user customizations)
+get_backup_paths() {
+    local paths=()
+    
+    # Zera preferences
+    [[ -f "$ZERA_USER_DIR/config.toml" ]] && paths+=("$ZERA_USER_DIR/config.toml")
+    
+    # Hyprland user overrides
+    [[ -d "$HOME/.config/hypr/user" ]] && paths+=("$HOME/.config/hypr/user")
+    
+    # Waybar user config (entry points they edit)
+    [[ -f "$HOME/.config/waybar/config.jsonc" ]] && paths+=("$HOME/.config/waybar/config.jsonc")
+    [[ -f "$HOME/.config/waybar/style.css" ]] && paths+=("$HOME/.config/waybar/style.css")
+    
+    # Copyable configs (fish, walker - user owns these entirely)
+    [[ -d "$HOME/.config/fish" ]] && paths+=("$HOME/.config/fish")
+    [[ -d "$HOME/.config/walker" ]] && paths+=("$HOME/.config/walker")
+    
+    # Kitty user customizations
+    [[ -f "$HOME/.config/kitty/kitty.conf" ]] && paths+=("$HOME/.config/kitty/kitty.conf")
+    
+    # Git config
+    [[ -f "$HOME/.gitconfig" ]] && paths+=("$HOME/.gitconfig")
+    
+    # Wallpapers
+    [[ -d "$HOME/.config/wallpapers" ]] && paths+=("$HOME/.config/wallpapers")
+    [[ -d "$HOME/Pictures/Wallpapers" ]] && paths+=("$HOME/Pictures/Wallpapers")
+    
+    printf '%s\n' "${paths[@]}"
+}
+
+cmd_backup() {
+    local subcmd="${1:-create}"
+    shift || true
+    
+    case "$subcmd" in
+        create|"")
+            backup_create "$@"
+            ;;
+        list|ls)
+            backup_list
+            ;;
+        restore)
+            backup_restore "$@"
+            ;;
+        export)
+            backup_export "$@"
+            ;;
+        *)
+            error "Unknown backup command: $subcmd"
+            echo ""
+            echo "Usage: zera backup [command]"
+            echo ""
+            echo "Commands:"
+            echo "  create [name]  Create a backup (default: timestamped)"
+            echo "  list           List available backups"
+            echo "  restore <name> Restore from a backup"
+            echo "  export [path]  Export configs as portable tarball"
+            exit 1
+            ;;
+    esac
+}
+
+backup_create() {
+    local name="${1:-$(date +%Y%m%d-%H%M%S)}"
+    local backup_path="$ZERA_BACKUP_DIR/$name"
+    
+    if [[ -d "$backup_path" ]]; then
+        error "Backup '$name' already exists"
+        return 1
+    fi
+    
+    section "Creating Backup: $name"
+    
+    ensure_dir "$backup_path"
+    
+    local count=0
+    while IFS= read -r path; do
+        [[ -z "$path" ]] && continue
+        
+        local rel_path="${path#$HOME/}"
+        local dest="$backup_path/$rel_path"
+        
+        ensure_dir "$(dirname "$dest")"
+        
+        if [[ -d "$path" ]]; then
+            cp -r "$path" "$dest"
+            log "Backed up: $rel_path/"
+        else
+            cp "$path" "$dest"
+            log "Backed up: $rel_path"
+        fi
+        ((count++)) || true
+    done < <(get_backup_paths)
+    
+    # Save metadata
+    cat > "$backup_path/.zera-backup" << EOF
+name=$name
+created=$(date -Iseconds)
+zera_version=$(get_package_version)
+files=$count
+EOF
+    
+    echo ""
+    success "Backup created: $backup_path"
+    info "Files backed up: $count"
+    echo ""
+    echo "Restore with: zera backup restore $name"
+}
+
+backup_list() {
+    section "Available Backups"
+    
+    if [[ ! -d "$ZERA_BACKUP_DIR" ]] || [[ -z "$(ls -A "$ZERA_BACKUP_DIR" 2>/dev/null)" ]]; then
+        info "No backups found"
+        echo ""
+        echo "Create one with: zera backup create"
+        return
+    fi
+    
+    for backup in "$ZERA_BACKUP_DIR"/*/; do
+        [[ ! -d "$backup" ]] && continue
+        local name=$(basename "$backup")
+        local meta="$backup/.zera-backup"
+        
+        if [[ -f "$meta" ]]; then
+            local created=$(grep "^created=" "$meta" | cut -d= -f2)
+            local files=$(grep "^files=" "$meta" | cut -d= -f2)
+            echo "  $name  ($files files, $(date -d "$created" '+%Y-%m-%d %H:%M' 2>/dev/null || echo "$created"))"
+        else
+            echo "  $name"
+        fi
+    done
+    
+    echo ""
+    echo "Restore with: zera backup restore <name>"
+}
+
+backup_restore() {
+    local name="${1:-}"
+    
+    if [[ -z "$name" ]]; then
+        error "Please specify a backup name"
+        echo ""
+        echo "Usage: zera backup restore <name>"
+        echo ""
+        backup_list
+        return 1
+    fi
+    
+    local backup_path="$ZERA_BACKUP_DIR/$name"
+    
+    if [[ ! -d "$backup_path" ]]; then
+        error "Backup '$name' not found"
+        backup_list
+        return 1
+    fi
+    
+    section "Restoring Backup: $name"
+    
+    # Confirm
+    warn "This will overwrite your current configs!"
+    read -rp "Continue? [y/N] " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        info "Cancelled"
+        return 0
+    fi
+    
+    local count=0
+    
+    # Restore all files from backup
+    while IFS= read -r -d '' file; do
+        local rel_path="${file#$backup_path/}"
+        [[ "$rel_path" == ".zera-backup" ]] && continue
+        
+        local dest="$HOME/$rel_path"
+        ensure_dir "$(dirname "$dest")"
+        
+        cp -r "$file" "$dest"
+        log "Restored: $rel_path"
+        ((count++)) || true
+    done < <(find "$backup_path" -type f -print0)
+    
+    echo ""
+    success "Restored $count files from backup '$name'"
+}
+
+backup_export() {
+    local output="${1:-$HOME/zera-config-$(date +%Y%m%d).tar.gz}"
+    
+    section "Exporting Configs"
+    
+    local tmp_dir=$(mktemp -d)
+    local export_dir="$tmp_dir/zera-config"
+    mkdir -p "$export_dir"
+    
+    local count=0
+    while IFS= read -r path; do
+        [[ -z "$path" ]] && continue
+        
+        local rel_path="${path#$HOME/}"
+        local dest="$export_dir/$rel_path"
+        
+        ensure_dir "$(dirname "$dest")"
+        
+        if [[ -d "$path" ]]; then
+            cp -r "$path" "$dest"
+        else
+            cp "$path" "$dest"
+        fi
+        ((count++)) || true
+    done < <(get_backup_paths)
+    
+    # Create tarball
+    tar -czf "$output" -C "$tmp_dir" "zera-config"
+    rm -rf "$tmp_dir"
+    
+    echo ""
+    success "Exported to: $output"
+    info "Files included: $count"
+    echo ""
+    echo "Share this file or import on another machine with:"
+    echo "  tar -xzf $(basename "$output") -C ~"
+    echo "  zera sync"
+}
+
+# Main
+main() {
+    local cmd="${1:-}"
+    shift || true
+    
+    # Check if sync is needed (warns user)
+    check_sync_status "$cmd"
+    
+    case "$cmd" in
+        "")
+            show_help
+            ;;
+        install)
+            cmd_install "$@"
+            ;;
+        sync|update)
+            cmd_sync "$@"
+            ;;
+        config|preferences|prefs)
+            cmd_config "$@"
+            ;;
+        status)
+            cmd_status
+            ;;
+        eject)
+            cmd_eject "${1:-}"
+            ;;
+        theme)
+            cmd_theme "${1:-}"
+            ;;
+        diff)
+            cmd_diff "${1:-}"
+            ;;
+        backup)
+            cmd_backup "$@"
+            ;;
+        version|-v|--version)
+            show_version
+            ;;
+        help|-h|--help)
+            show_help
+            ;;
+        *)
+            error "Unknown command: $cmd"
+            echo ""
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

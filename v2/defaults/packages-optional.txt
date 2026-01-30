@@ -1,0 +1,41 @@
+# Zera Optional Packages
+# Extra packages for specific use cases
+
+# --- Gaming ---
+# steam
+# lutris
+# gamemode
+# lib32-nvidia-utils
+# mangohud
+
+# --- Development ---
+docker
+docker-compose
+
+# --- Virtualization ---
+qemu-desktop
+libvirt
+virt-manager
+edk2-ovmf
+dkms
+
+# --- Streaming ---
+sunshine
+
+# --- Remote Access ---
+cloudflared
+
+# --- NVIDIA GPU ---
+# nvidia-open-dkms
+# libva-nvidia-driver
+# cuda
+
+# --- AMD GPU ---
+# mesa
+# vulkan-radeon
+# libva-mesa-driver
+
+# --- Intel GPU ---
+# mesa
+# vulkan-intel
+# intel-media-driver

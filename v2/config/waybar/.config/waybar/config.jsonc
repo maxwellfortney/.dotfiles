@@ -1,0 +1,14 @@
+{
+    // Zera Waybar Config
+    // Your customizations go here - they override zera.jsonc defaults
+    // See zera.jsonc for available modules and their default settings
+    
+    "include": ["~/.config/waybar/zera.jsonc"],
+    
+    // Example overrides:
+    // "position": "top",
+    // "height": 32,
+    // "clock": {
+    //     "format": "{:%H:%M}"
+    // }
+}
