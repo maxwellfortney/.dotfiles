@@ -1,5 +1,4 @@
 # System Information
-# Generated: Fri Jan 30 12:04:04 AM EST 2026
 
 # Hostname
 HOSTNAME=archlinux

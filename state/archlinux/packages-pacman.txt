@@ -27,6 +27,7 @@ htop
 hyprland
 hyprlauncher
 hyprpaper
+hyprpicker
 hyprshot
 hyprsunset
 iwd
