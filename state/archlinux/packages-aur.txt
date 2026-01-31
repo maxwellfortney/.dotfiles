@@ -1,3 +1,4 @@
+adwaita-qt6
 asdf-vm
 brave-bin
 bruno

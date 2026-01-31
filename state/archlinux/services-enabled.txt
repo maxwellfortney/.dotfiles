@@ -1,3 +1,4 @@
+avahi-daemon.service
 bluetooth.service
 cloudflared.service
 docker.service

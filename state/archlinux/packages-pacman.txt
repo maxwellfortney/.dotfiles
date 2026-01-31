@@ -32,6 +32,7 @@ hyprshot
 hyprsunset
 iwd
 kitty
+kvantum
 less
 libpulse
 libva-nvidia-driver
@@ -39,10 +40,13 @@ libvirt
 linux
 linux-firmware
 linux-headers
+matugen
 nano
+nautilus
 network-manager-applet
 networkmanager
 nvidia-open-dkms
+nwg-look
 otf-geist-mono-nerd
 pipewire
 pipewire-alsa
@@ -52,6 +56,7 @@ polkit-kde-agent
 qemu-desktop
 qt5-wayland
 qt6-wayland
+qt6ct
 sddm
 shellcheck
 slurp
@@ -70,6 +75,7 @@ wireless_tools
 wireplumber
 wofi
 wpa_supplicant
+xdg-desktop-portal-gtk
 xdg-desktop-portal-hyprland
 xdg-utils
 xorg-server

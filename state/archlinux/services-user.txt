@@ -1,3 +1,4 @@
 elephant.service
 hyprpaper.service
 wireplumber.service
+xdg-user-dirs.service
