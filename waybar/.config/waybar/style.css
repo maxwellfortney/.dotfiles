@@ -2,7 +2,7 @@
     font-family: "monospace";
 }
 
-@define-color background-color rgba(17, 17, 27, 0.4);
+@define-color background-color rgba(16, 20, 24, 0.4);
 
 window#waybar{
     padding: 0 100px;
