@@ -1,3 +1,4 @@
+aichat
 amd-ucode
 base
 base-devel
@@ -12,7 +13,6 @@ dmidecode
 dnsmasq
 docker
 docker-compose
-dolphin
 dunst
 edk2-ovmf
 efibootmgr
