@@ -12,6 +12,7 @@ elephant-symbols
 google-chrome
 mongodb-compass-bin
 mullvad-vpn-bin
+postman-bin
 pwvucontrol
 rate-mirrors
 slack-desktop
