@@ -12,6 +12,7 @@ elephant-symbols
 google-chrome
 mongodb-compass-bin
 mullvad-vpn-bin
+opencode-bin
 postman-bin
 pwvucontrol
 rate-mirrors
@@ -22,4 +23,5 @@ vesktop
 walker
 yay
 yay-debug
+zed-preview-bin
 zen-browser-bin
