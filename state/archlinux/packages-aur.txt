@@ -1,4 +1,5 @@
 adwaita-qt6
+antigravity
 apple-fonts
 asdf-vm
 brave-bin
@@ -20,6 +21,7 @@ slack-desktop
 ttf-apple-emoji
 ttf-geist-mono
 vesktop
+visual-studio-code-bin
 walker
 yay
 yay-debug
