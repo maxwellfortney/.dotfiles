@@ -33,6 +33,7 @@ hyprsunset
 iwd
 kitty
 kvantum
+kwalletmanager
 less
 libpulse
 libva-nvidia-driver
