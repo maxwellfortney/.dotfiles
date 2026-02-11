@@ -14,6 +14,7 @@ nvidia-resume.service
 nvidia-suspend.service
 nvidia-suspend-then-hibernate.service
 sddm.service
+sshd.service
 systemd-resolved.service
 systemd-timesyncd.service
 tailscaled.service
