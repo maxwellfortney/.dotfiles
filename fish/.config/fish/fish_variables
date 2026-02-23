@@ -2,4 +2,4 @@
 # VERSION: 3.0
 SETUVAR __fish_initialized:4300
 SETUVAR fish_greeting:\x1d
-SETUVAR fish_user_paths:\x7e/\x2elocal/bin/
+SETUVAR fish_user_paths:/home/maxwell/\x2elocal/bin\x1e\x7e/\x2elocal/bin/

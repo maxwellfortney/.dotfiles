@@ -1,0 +1,28 @@
+#!/bin/bash
+# Toggle between HDMI-A-2 (3840x2160@240) and DP-1 (3440x1440@100).
+# Run locally under Hyprland; uses hyprctl to switch the active display.
+
+set -e
+
+readonly HDMI='HDMI-A-2'
+readonly HDMI_MODE='3840x2160@240,0x0,1.0666667'
+readonly DP='DP-1'
+readonly DP_MODE='3440x1440@100,0x0,1'
+
+monitors_output=$(hyprctl monitors 2>/dev/null) || true
+if [[ -z "$monitors_output" ]]; then
+  echo "toggle-monitor: hyprctl monitors produced no output (Hyprland not running?)" >&2
+  exit 1
+fi
+
+if [[ "$monitors_output" == *"$HDMI"* ]]; then
+  # HDMI-A-2 is active -> switch to DP-1
+  hyprctl keyword monitor "$HDMI,disable"
+  hyprctl keyword monitor "$DP,$DP_MODE"
+  echo "Switched to $DP ($DP_MODE)"
+else
+  # DP-1 is active (or neither) -> switch to HDMI-A-2
+  hyprctl keyword monitor "$DP,disable"
+  hyprctl keyword monitor "$HDMI,$HDMI_MODE"
+  echo "Switched to $HDMI ($HDMI_MODE)"
+fi

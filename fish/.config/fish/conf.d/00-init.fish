@@ -12,7 +12,7 @@ export EDITOR=cursor
 # -----------------------------------------------------
 # PATH
 # -----------------------------------------------------
-set -U fish_user_paths "~/.local/bin/"
+fish_add_path $HOME/.local/bin
 
 # -----------------------------------------------------
 # Secrets (gitignored - see 99-secrets.fish.example)
