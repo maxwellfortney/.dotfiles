@@ -58,6 +58,7 @@ qemu-desktop
 qt5-wayland
 qt6-wayland
 qt6ct
+rate-mirrors
 sddm
 shellcheck
 slurp

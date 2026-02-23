@@ -16,7 +16,6 @@ mullvad-vpn-bin
 opencode-bin
 postman-bin
 pwvucontrol
-rate-mirrors
 slack-desktop
 ttf-apple-emoji
 ttf-geist-mono
