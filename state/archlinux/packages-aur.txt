@@ -2,6 +2,7 @@ adwaita-qt6
 antigravity
 apple-fonts
 asdf-vm
+bambustudio-nvidia-bin
 brave-bin
 bruno
 cursor-bin
