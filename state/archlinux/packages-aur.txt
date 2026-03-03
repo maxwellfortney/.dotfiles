@@ -11,6 +11,7 @@ elephant
 elephant-clipboard
 elephant-desktopapplications
 elephant-symbols
+figma-linux-bin
 google-chrome
 mongodb-compass-bin
 mullvad-vpn-bin
