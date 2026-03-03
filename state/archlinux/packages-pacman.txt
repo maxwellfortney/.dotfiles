@@ -68,6 +68,7 @@ stow
 sudo
 sunshine
 tailscale
+telegram-desktop
 uwsm
 vim
 virt-manager
