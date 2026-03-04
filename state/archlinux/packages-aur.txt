@@ -5,6 +5,7 @@ asdf-vm
 bambustudio-nvidia-bin
 brave-bin
 bruno
+claude-code
 cursor-bin
 doppler-cli-bin
 elephant
