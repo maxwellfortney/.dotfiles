@@ -48,6 +48,7 @@ network-manager-applet
 networkmanager
 nvidia-open-dkms
 nwg-look
+obs-studio
 otf-geist-mono-nerd
 pipewire
 pipewire-alsa
