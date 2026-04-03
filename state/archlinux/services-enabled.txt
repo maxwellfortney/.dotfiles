@@ -9,10 +9,6 @@ mullvad-early-boot-blocking.service
 NetworkManager-dispatcher.service
 NetworkManager.service
 NetworkManager-wait-online.service
-nvidia-hibernate.service
-nvidia-resume.service
-nvidia-suspend.service
-nvidia-suspend-then-hibernate.service
 sddm.service
 sshd.service
 systemd-resolved.service
