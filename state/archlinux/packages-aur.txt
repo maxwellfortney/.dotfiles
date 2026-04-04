@@ -19,6 +19,7 @@ mullvad-vpn-bin
 opencode-bin
 postman-bin
 pwvucontrol
+railwayapp-cli
 slack-desktop
 ttf-apple-emoji
 ttf-geist-mono
