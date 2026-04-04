@@ -65,6 +65,7 @@ sddm
 shellcheck
 slurp
 smartmontools
+sqlitebrowser
 starship
 stow
 sudo
