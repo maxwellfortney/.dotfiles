@@ -3,6 +3,7 @@ amd-ucode
 base
 base-devel
 bat
+blender
 blueman
 bluez
 bluez-utils
