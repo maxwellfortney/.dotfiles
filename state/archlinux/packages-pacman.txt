@@ -66,6 +66,7 @@ sddm
 shellcheck
 slurp
 smartmontools
+spotify-launcher
 sqlitebrowser
 starship
 stow
