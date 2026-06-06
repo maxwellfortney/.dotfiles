@@ -51,6 +51,7 @@ networkmanager
 nvidia-open-dkms
 nwg-look
 obs-studio
+openai-codex
 otf-geist-mono-nerd
 pipewire
 pipewire-alsa
