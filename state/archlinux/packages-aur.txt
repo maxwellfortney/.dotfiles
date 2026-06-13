@@ -16,6 +16,7 @@ elephant-desktopapplications
 elephant-symbols
 figma-linux-bin
 google-chrome
+lmstudio-bin
 mongodb-compass-bin
 mullvad-vpn-bin
 opencode-bin
