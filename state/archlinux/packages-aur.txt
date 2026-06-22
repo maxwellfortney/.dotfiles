@@ -10,6 +10,7 @@ claude-desktop-bin
 codex-desktop
 cursor-bin
 doppler-cli-bin
+elecwhat-bin
 elephant
 elephant-clipboard
 elephant-desktopapplications
