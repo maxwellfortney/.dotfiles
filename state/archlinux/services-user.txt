@@ -1,4 +1,3 @@
-codex-update-manager.service
 elephant.service
 hyprpaper.service
 wireplumber.service

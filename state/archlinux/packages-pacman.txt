@@ -52,6 +52,7 @@ nvidia-open-dkms
 nwg-look
 obs-studio
 openai-codex
+openscad
 otf-geist-mono-nerd
 pipewire
 pipewire-alsa

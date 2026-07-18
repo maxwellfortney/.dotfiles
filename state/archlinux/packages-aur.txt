@@ -7,7 +7,7 @@ brave-bin
 bruno
 claude-code
 claude-desktop-bin
-codex-desktop
+codex-app-unofficial
 cursor-bin
 doppler-cli-bin
 elecwhat-bin
