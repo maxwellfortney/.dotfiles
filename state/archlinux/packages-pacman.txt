@@ -59,6 +59,7 @@ pipewire-alsa
 pipewire-jack
 pipewire-pulse
 polkit-kde-agent
+python-jsonschema
 qemu-desktop
 qt5-wayland
 qt6-wayland
