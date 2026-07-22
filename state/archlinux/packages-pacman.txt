@@ -32,6 +32,7 @@ hyprpicker
 hyprshot
 hyprsunset
 iwd
+kicad
 kitty
 kvantum
 kwalletmanager
