@@ -33,6 +33,7 @@ hyprshot
 hyprsunset
 iwd
 kicad
+kicad-library
 kitty
 kvantum
 kwalletmanager
@@ -55,11 +56,13 @@ obs-studio
 openai-codex
 openscad
 otf-geist-mono-nerd
+pacman-contrib
 pipewire
 pipewire-alsa
 pipewire-jack
 pipewire-pulse
 polkit-kde-agent
+python-hypothesis
 python-jsonschema
 qemu-desktop
 qt5-wayland
