@@ -7,7 +7,7 @@ brave-bin
 bruno
 claude-code
 claude-desktop-bin
-codex-app-unofficial
+codex-desktop
 cursor-bin
 doppler-cli-bin
 elecwhat-bin
@@ -21,6 +21,7 @@ google-cloud-cli
 lmstudio-bin
 mongodb-compass-bin
 mullvad-vpn-bin
+openai-codex-bin
 opencode-bin
 postman-bin
 pwvucontrol
