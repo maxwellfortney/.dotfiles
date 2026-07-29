@@ -23,6 +23,7 @@ mongodb-compass-bin
 mullvad-vpn-bin
 openai-codex-bin
 opencode-bin
+orca-slicer-bin
 postman-bin
 pwvucontrol
 railwayapp-cli

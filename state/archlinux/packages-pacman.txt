@@ -24,6 +24,7 @@ fish
 git
 github-cli
 grim
+gst-plugin-gtk
 gst-plugin-pipewire
 htop
 hyprland
