@@ -7,7 +7,6 @@ brave-bin
 bruno
 claude-code
 claude-desktop-bin
-codex-desktop
 cursor-bin
 doppler-cli-bin
 elecwhat-bin
@@ -34,6 +33,5 @@ vesktop
 visual-studio-code-bin
 walker
 yay
-yay-debug
 zed-preview-bin
 zen-browser-bin

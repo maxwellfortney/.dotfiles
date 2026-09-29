@@ -8,6 +8,7 @@ blender
 blueman
 bluez
 bluez-utils
+chatgpt-bin
 cloudflared
 cuda
 dkms
