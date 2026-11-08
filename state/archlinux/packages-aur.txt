@@ -6,7 +6,7 @@ bambustudio-nvidia-bin
 brave-bin
 bruno
 claude-code
-claude-desktop-bin
+claude-desktop
 cursor-bin
 doppler-cli-bin
 elecwhat-bin
