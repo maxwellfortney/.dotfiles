@@ -12,3 +12,5 @@ PS1='[\u@\h \W]\$ '
 # Helpful message
 echo "🐟 For the best experience, use kitty terminal which runs fish shell"
 echo "   Run: kitty"
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.steel/bin:$PATH"

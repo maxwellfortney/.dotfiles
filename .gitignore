@@ -26,3 +26,13 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# Installed by tools into the stowed ~/.local/bin, not dotfiles
+bin/.local/bin/belt
+bin/.local/bin/codex
+bin/.local/bin/firecrawl
+bin/.local/bin/inferencesh
+bin/.local/bin/infsh
+
+# Empty file apps create in the stowed ~/.local/share/applications
+desktop-entries/.local/share/applications/mimeapps.list

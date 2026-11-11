@@ -74,7 +74,7 @@ headerbar, .titlebar:not(headerbar) {
 }
 
 /* Content pane / views */
-.view,
+.view:not(:selected),
 statuspage,
 scrolledwindow,
 viewport,
