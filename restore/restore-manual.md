@@ -110,7 +110,7 @@ Complete them after running the automated restoration scripts.
 ### Monitors
 
 - [ ] Verify monitor configuration in Hyprland
-- [ ] Adjust `~/.config/hypr/modules/monitors.conf` if needed
+- [ ] Adjust the MONITORS section of `~/.config/hypr/hyprland.lua` if needed
 
 ## Verification Checklist
 

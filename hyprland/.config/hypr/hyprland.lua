@@ -1,13 +1,12 @@
--- Hyprland 0.57+ config (Lua), converted from hyprland.conf and modules/*.conf.
--- The old .conf files are kept next to this one for reference; Hyprland no
--- longer reads them. https://wiki.hypr.land/configuring/
+-- Hyprland 0.57+ config (Lua), converted from the old hyprland.conf and
+-- modules/*.conf (in git history). https://wiki.hypr.land/configuring/
 
 local home = os.getenv("HOME")
 
 ------------------
 ---- COLORS ------
 ------------------
--- From matugen/colors.conf (its Hyprland template is turned off, so these are fixed).
+-- From the old matugen/colors.conf (matugen's Hyprland template is off, so these are fixed).
 
 local colors = {
     primary  = "rgba(a0cafdff)",
