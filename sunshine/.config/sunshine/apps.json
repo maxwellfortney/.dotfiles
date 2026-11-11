@@ -9,11 +9,11 @@
             "name": "Headless",
             "prep-cmd": [
                 {
-                    "do": "sh -c \"hyprctl keyword monitor HEADLESS-2,${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}@${SUNSHINE_CLIENT_FPS},auto,1\"",
-                    "undo": "hyprctl keyword monitor HEADLESS-2,disable"
+                    "do": "sh -c \"hyprctl eval \\\"hl.monitor({ output = 'HEADLESS-2', mode = '${SUNSHINE_CLIENT_WIDTH}x${SUNSHINE_CLIENT_HEIGHT}@${SUNSHINE_CLIENT_FPS}', position = 'auto', scale = 1 })\\\"\"",
+                    "undo": "hyprctl eval \"hl.monitor({ output = 'HEADLESS-2', disabled = true })\""
                 },
                 {
-                    "do": "hyprctl keyword monitor HDMI-A-2,disable",
+                    "do": "hyprctl eval \"hl.monitor({ output = 'HDMI-A-2', disabled = true })\"",
                     "undo": "hyprctl reload"
                 }
             ],
