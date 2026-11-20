@@ -93,6 +93,7 @@ uwsm
 vim
 virt-manager
 waybar
+wf-recorder
 wget
 wireless_tools
 wireplumber
