@@ -49,6 +49,7 @@ linux
 linux-firmware
 linux-headers
 matugen
+mpv
 nano
 nautilus
 network-manager-applet
